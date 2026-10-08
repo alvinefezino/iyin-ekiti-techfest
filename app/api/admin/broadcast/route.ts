@@ -18,11 +18,18 @@ export async function POST(req: NextRequest) {
   const from = process.env.EMAIL_FROM || "Iyin-Ekiti TechFest <onboarding@resend.dev>";
 
   let sent = 0;
+  let lastError: string | null = null;
   for (let i = 0; i < list.length; i += 100) {
     const chunk = list.slice(i, i + 100).map((s) => ({ from, to: s.email, subject: String(subject), html: html(s.token) }));
     const res = await fetch("https://api.resend.com/emails/batch", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify(chunk) });
     if (res.ok) sent += chunk.length;
+    else {
+      const txt = await res.text().catch(() => res.statusText);
+      lastError = txt;
+      console.error("[broadcast] Resend batch failed", res.status, txt);
+    }
   }
   await sb.from("broadcasts").insert({ subject: String(subject), body: String(body), sent_at: new Date().toISOString() });
-  return NextResponse.json({ ok: true, sent, total: list.length });
+  if (sent === 0 && lastError) return NextResponse.json({ ok: false, sent, total: list.length, error: lastError }, { status: 502 });
+  return NextResponse.json({ ok: true, sent, total: list.length, error: lastError });
 }

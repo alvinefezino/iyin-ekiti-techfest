@@ -224,7 +224,10 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {items(b).map((s, i) => (
               <Card key={i}>
-                {s.image ? <Img src={s.image} alt={s.name} className="h-14 mx-auto object-contain" /> : <div className="text-center text-muted">{s.name}</div>}
+                  <div className="grid gap-2 place-items-center py-2">
+                {s.image ? <Img src={s.image} alt={s.name} className="h-14 object-contain" /> : null}
+                <div className="text-center text-sm font-medium">{s.name || "Sponsor"}</div>
+              </div>
               </Card>
             ))}
           </div>

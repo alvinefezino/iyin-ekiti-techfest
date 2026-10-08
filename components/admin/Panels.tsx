@@ -75,8 +75,10 @@ export function AudiencePanel() {
           if (!confirm(`Send to ${active.length} subscribers?`)) return;
           setMsg("Sending…");
           const res = await fetch("/api/admin/broadcast", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject, body }) });
-          const j = await res.json().catch(() => ({}));
-          setMsg(res.ok ? `Sent to ${j.sent} of ${j.total}.` : j.error || "Failed");
+          const j = await res.json().catch(() => ({} as any));
+          if (!res.ok) setMsg(j.error ? `Failed: ${String(j.error).slice(0,300)}` : `Failed (${res.status})`);
+          else if (j.sent === 0 && j.error) setMsg(`Failed: ${String(j.error).slice(0,300)}`);
+          else setMsg(`Sent to ${j.sent} of ${j.total}.`);
         }}>Send broadcast</button>
         <span className="text-xs text-teal">{msg}</span>
       </div>
