@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     await supabaseAdmin().from("subscribers").update({ unsubscribed_at: new Date().toISOString() }).eq("token", token);
   }
   return new Response(
-    `<html><body style="background:#04140e;color:#e8fff6;font-family:Arial;display:grid;place-items:center;height:100vh"><p>You've been unsubscribed.</p></body></html>`,
+    `<html><body style="background:#013216;color:#FFFFFF;font-family:Arial;display:grid;place-items:center;height:100vh"><p>You've been unsubscribed.</p></body></html>`,
     { headers: { "Content-Type": "text/html" } }
   );
 }

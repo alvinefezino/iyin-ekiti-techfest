@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   const { data: subs } = await sb.from("subscribers").select("email,token").is("unsubscribed_at", null);
   const list = subs ?? [];
   const esc = (s: string) => s.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]!));
-  const html = (token: string) => shell(`<div style="white-space:pre-line">${esc(String(body))}</div><p style="font-size:12px;margin-top:20px"><a style="color:#14b8a6" href="${SITE.url}">Visit the site</a> · <a style="color:#14b8a6" href="${SITE.url}/api/unsubscribe?token=${token}">Unsubscribe</a></p>`);
+  const html = (token: string) => shell(`<div style="white-space:pre-line">${esc(String(body))}</div><p style="font-size:12px;margin-top:20px"><a style="color:#F57F17" href="${SITE.url}">Visit the site</a> · <a style="color:#F57F17" href="${SITE.url}/api/unsubscribe?token=${token}">Unsubscribe</a></p>`);
   const from = process.env.EMAIL_FROM || "Iyin-Ekiti TechFest <onboarding@resend.dev>";
 
   let sent = 0;

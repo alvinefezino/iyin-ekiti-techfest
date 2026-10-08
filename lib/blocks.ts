@@ -14,7 +14,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     defaults: {
       eyebrow: "Thinking Beyond Borders",
       title: "Iyin-Ekiti TechFest",
-      subtitle: "A hackathon powered by Fiesu and FUTES Gotham Mafians. 7 November 2026, 9:00 AM to 5:00 PM.",
+      subtitle: "A hackathon powered by FIESU and FUTES Gotham Mafians. 7 November 2026, 9:00 AM to 5:00 PM.",
       ctaLabel: "Register for the hackathon",
       ctaHref: "#register",
     },
@@ -169,7 +169,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
   footer: {
     label: "Footer",
     defaults: {
-      text: "Iyin-Ekiti TechFest powered by Fiesu and FUTES Gotham Mafians",
+      text: "Iyin-Ekiti TechFest powered by FIESU and FUTES Gotham Mafians",
       items: [{ label: "Home", href: "#" }],
     },
     fields: [

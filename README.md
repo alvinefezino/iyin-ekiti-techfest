@@ -1,4 +1,4 @@
-# Iyin-Ekiti TechFest powered by Fiesu and FUTES Gotham Mafians
+# Iyin-Ekiti TechFest powered by FIESU and FUTES Gotham Mafians
 
 Next.js 16 + Tailwind 4 + React Three Fiber + Supabase + Groq + Paystack + Resend.
 

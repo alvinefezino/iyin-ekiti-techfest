@@ -3,9 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import Builder from "@/components/admin/Builder";
-import { ChatbotPanel, SettingsPanel, AudiencePanel, RegistrationsPanel, AttendeesPanel, CheckinPanel } from "@/components/admin/Panels";
+import { ChatbotPanel, SettingsPanel, AudiencePanel, RegistrationsPanel, AttendeesPanel, CheckinPanel, ExamPanel } from "@/components/admin/Panels";
 
-const TABS = ["Page builder", "Chatbot", "Settings", "Subscribers", "Hackathon", "Attendees", "Check-in"] as const;
+const TABS = ["Page builder", "Chatbot", "Settings", "Subscribers", "Hackathon", "Attendees", "Exam Terminal", "Check-in"] as const;
 
 export default function AdminApp({ email }: { email: string }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Page builder");
@@ -28,6 +28,7 @@ export default function AdminApp({ email }: { email: string }) {
       {tab === "Subscribers" && <AudiencePanel />}
       {tab === "Hackathon" && <RegistrationsPanel />}
       {tab === "Attendees" && <AttendeesPanel />}
+      {tab === "Exam Terminal" && <ExamPanel />}
       {tab === "Check-in" && <CheckinPanel />}
     </div>
   );

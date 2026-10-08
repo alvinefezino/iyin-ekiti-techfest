@@ -77,6 +77,29 @@ create table if not exists orders (
   created_at timestamptz not null default now()
 );
 
+
+create table if not exists exam_invites (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  registration_id uuid references hackathon_registrations(id) on delete set null,
+  token uuid not null unique default gen_random_uuid(),
+  status text not null default 'invited' check (status in ('invited','started','submitted','disqualified')),
+  disqualified_reason text,
+  score int,
+  answers jsonb,
+  created_at timestamptz not null default now(),
+  started_at timestamptz,
+  submitted_at timestamptz,
+  expires_at timestamptz
+);
+
+create table if not exists exam_questions (
+  id int primary key,
+  question text not null,
+  options jsonb not null,
+  answer int not null
+);
+
 create table if not exists tickets (
   id uuid primary key default gen_random_uuid(),
   order_id uuid not null references orders(id) on delete cascade,
@@ -102,6 +125,8 @@ alter table hackathon_registrations enable row level security;
 alter table event_attendees enable row level security;
 alter table orders enable row level security;
 alter table tickets enable row level security;
+alter table exam_invites enable row level security;
+alter table exam_questions enable row level security;
 
 -- Public can read published content only (the draft column is hidden from anon)
 revoke select on pages from anon;
@@ -118,6 +143,9 @@ create policy "admin_regs" on hackathon_registrations for select using (is_admin
 create policy "admin_attendees" on event_attendees for select using (is_admin());
 create policy "admin_orders" on orders for select using (is_admin());
 create policy "admin_tickets" on tickets for select using (is_admin());
+create policy "admin_exam_invites" on exam_invites for all using (is_admin()) with check (is_admin());
+create policy "exam_public_read" on exam_questions for select using (true);
+create policy "exam_invite_public_read" on exam_invites for select using (true);
 create policy "admin_self" on admins for select using (user_id = auth.uid());
 
 -- Public image bucket for admin uploads

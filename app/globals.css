@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #04140e;
-  --color-emerald: #059669;
-  --color-teal: #14b8a6;
-  --color-accent: #f58220;
-  --color-countdown: #ff4d4d;
-  --color-countdown-gold: #facc15;
-  --color-ink: #e8fff6;
-  --color-muted: #8fb5a5;
+  --color-bg: #013216;
+  --color-emerald: #013216;
+  --color-teal: #F57F17;
+  --color-accent: #F57F17;
+  --color-countdown: #F57F17;
+  --color-countdown-gold: #F57F17;
+  --color-ink: #FFFFFF;
+  --color-muted: #A0A0A0;
   --font-sans: 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 }
@@ -28,8 +28,8 @@ body::before {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(40rem 40rem at 0% 0%, rgba(5, 150, 105, 0.35), transparent 60%),
-    radial-gradient(36rem 36rem at 100% 100%, rgba(20, 184, 166, 0.28), transparent 60%);
+    radial-gradient(40rem 40rem at 0% 0%, rgba(1, 50, 22, 0.45), transparent 60%),
+    radial-gradient(36rem 36rem at 100% 100%, rgba(245, 127, 23, 0.22), transparent 60%);
 }
 
 .glass {
@@ -103,7 +103,7 @@ body::before {
 
 /* Solid-feeling glass for panels that need focus (menu, chat, cookie settings, navbar) */
 .glass-modal {
-  background: rgba(4, 20, 14, 0.78);
+  background: rgba(1, 50, 22, 0.88);
   backdrop-filter: blur(24px) saturate(140%);
   -webkit-backdrop-filter: blur(24px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.22);

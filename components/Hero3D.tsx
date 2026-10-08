@@ -20,7 +20,7 @@ function drawScreen(ctx: CanvasRenderingContext2D, r: Remaining) {
     ctx.fill();
   });
   ctx.textAlign = "center";
-  ctx.fillStyle = "#8fb5a5";
+  ctx.fillStyle = "#A0A0A0";
   ctx.font = "500 34px monospace";
   ctx.fillText("event.starts_in()", W / 2, 130);
   const cols = [
@@ -28,25 +28,25 @@ function drawScreen(ctx: CanvasRenderingContext2D, r: Remaining) {
   ];
   cols.forEach(([v, l], i) => {
     const x = 130 + i * 255;
-    ctx.fillStyle = "#facc15";
-    ctx.shadowColor = "rgba(250,204,21,0.55)";
+    ctx.fillStyle = "#F57F17";
+    ctx.shadowColor = "rgba(245,127,23,0.55)";
     ctx.shadowBlur = 18;
     ctx.font = "700 150px monospace";
     ctx.fillText(v, x, 340);
     ctx.shadowBlur = 0;
-    ctx.fillStyle = "#8fb5a5";
+    ctx.fillStyle = "#A0A0A0";
     ctx.font = "500 30px monospace";
     ctx.fillText(l, x, 400);
     if (i < 3) {
-      ctx.fillStyle = "#facc15";
-      ctx.shadowColor = "rgba(250,204,21,0.45)";
+      ctx.fillStyle = "#F57F17";
+      ctx.shadowColor = "rgba(245,127,23,0.45)";
       ctx.shadowBlur = 14;
       ctx.font = "700 120px monospace";
       ctx.fillText(":", x + 128, 330);
       ctx.shadowBlur = 0;
     }
   });
-  ctx.fillStyle = "#14b8a6";
+  ctx.fillStyle = "#F57F17";
   ctx.font = "500 30px monospace";
   ctx.fillText(r.done ? "// it's happening" : "// Thinking Beyond Borders", W / 2, 540);
 }
@@ -134,10 +134,10 @@ export default function Hero3D({ remaining, progress }: { remaining: Remaining; 
   return (
     <Canvas dpr={[1, 1.6]} camera={{ position: [0, 1.3, 6], fov: 40 }} gl={{ antialias: true, alpha: true }}>
       <ambientLight intensity={1.1} />
-      <hemisphereLight args={["#e8fff6", "#04140e", 0.8]} />
+      <hemisphereLight args={["#FFFFFF", "#013216", 0.8]} />
       <directionalLight position={[4, 6, 5]} intensity={2.2} />
-      <pointLight position={[-4, 2, 3]} intensity={30} color="#14b8a6" />
-      <pointLight position={[4, 1, -3]} intensity={20} color="#059669" />
+      <pointLight position={[-4, 2, 3]} intensity={30} color="#F57F17" />
+      <pointLight position={[4, 1, -3]} intensity={20} color="#013216" />
       <Laptop remaining={remaining} progress={progress} />
     </Canvas>
   );

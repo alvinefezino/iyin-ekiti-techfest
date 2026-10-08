@@ -21,6 +21,6 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error: "Couldn't subscribe. Try again." }, { status: 500 });
     token = data.token;
   }
-  await sendEmail(email, `You're subscribed to ${SITE.name}`, shell(`<p>Thanks for subscribing. We'll email you when the event details change.</p><p style="font-size:12px"><a style="color:#14b8a6" href="${SITE.url}/api/unsubscribe?token=${token}">Unsubscribe</a></p>`));
+  await sendEmail(email, `You're subscribed to ${SITE.name}`, shell(`<p>Thanks for subscribing. We'll email you when the event details change.</p><p style="font-size:12px"><a style="color:#F57F17" href="${SITE.url}/api/unsubscribe?token=${token}">Unsubscribe</a></p>`));
   return NextResponse.json({ ok: true });
 }

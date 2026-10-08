@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: { title: SITE.fullName, description: SITE.tagline, images: [SITE.logo] },
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#04140e" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#013216" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
