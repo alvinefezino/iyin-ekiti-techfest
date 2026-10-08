@@ -158,6 +158,7 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
   if (!started) {
     return (
       <div className="min-h-screen grid place-items-center bg-[#013216] text-white p-6">
+        {isPreview && <div className="fixed top-0 inset-x-0 z-20 bg-amber-400 text-black text-xs font-semibold text-center py-2">Preview mode — no timer, no disqualification. Open the real link to start the 20-minute timed exam.</div>}
         <div className="bg-black border border-[#F57F17]/30 rounded-2xl p-8 max-w-lg w-full">
           <h1 className="text-2xl font-semibold">Exam Terminal</h1>
           <p className="text-white/70 text-sm mt-2">You are about to enter the FIESU Exam Terminal. 50 questions, 20 minutes.</p>
@@ -181,8 +182,9 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
 
   return (
     <div className="min-h-screen bg-[#013216] text-white select-none" style={{ userSelect: "none" as any, WebkitUserSelect: "none" as any }} onCopy={(e) => e.preventDefault()} onCut={(e) => e.preventDefault()} onPaste={(e) => e.preventDefault()} onContextMenu={(e) => e.preventDefault()}>
+      {isPreview && <div className="bg-amber-400 text-black text-xs font-semibold text-center py-2 px-4">Preview mode — answers are not saved and anti-cheat is off. Close preview and open the real link for the timed 20-minute exam.</div>}
       <header className="sticky top-0 z-10 bg-black border-b border-[#F57F17]/20 px-4 py-3 flex items-center justify-between">
-        <b className="text-sm tracking-wide">FIESU Exam Terminal</b>
+        <b className="text-sm tracking-wide">FIESU Exam Terminal{isPreview ? " — Preview" : ""}</b>
         <div className="flex items-center gap-3">
           <span className="font-mono text-sm bg-[#F57F17] text-black px-3 py-1 rounded-full">{mm}:{ss}</span>
           <span className="text-xs text-white/60 hidden sm:block">{current + 1} / 50</span>

@@ -230,8 +230,8 @@ export function ExamPanel() {
       </div>
 
       <div className="glass p-4">
-        <h3 className="font-semibold text-sm mb-2">Questions ({qRows.length} / 50)</h3>
-        <p className="text-xs text-muted mb-3">Add or edit the 50 questions here. Leave empty to use the placeholder file lib/examQuestions.ts until you paste the real ones. When done, publish will use DB questions.</p>
+        <h3 className="font-semibold text-sm mb-2">Questions ({qRows.length ? `${qRows.length} / 50` : "50 placeholder (file)"})</h3>
+        <p className="text-xs text-muted mb-3">{qRows.length ? "DB questions — exam will use these (shuffled per invite)." : "No DB questions yet — exam is using 50 placeholder questions from lib/examQuestions.ts (shuffled per invite). Add below or import real ones; when DB has 50, those take over."}</p>
         <div className="max-h-[20rem] overflow-y-auto divide-y divide-white/10 border border-white/10 rounded-xl">
           {qRows.map((qq: any) => (
             <div key={qq.id} className="p-2 text-xs">
@@ -239,7 +239,7 @@ export function ExamPanel() {
               <div className="text-muted ml-4">{(qq.options ?? []).map((o: string, i: number) => <span key={i} className={qq.answer===i ? "text-white font-medium" : ""}>{String.fromCharCode(65+i)}. {o} </span>)}</div>
             </div>
           ))}
-          {qRows.length===0 && <div className="p-3 text-xs text-muted">No DB questions yet — using placeholder file. Add below or run SQL import.</div>}
+          {qRows.length===0 && <div className="p-3 text-xs text-muted">Showing 50 dummy questions from the placeholder file. Open any invite&apos;s <span className="text-white">Preview link</span> (<code className="text-white">?preview=1</code>) to see them, or add real questions below.</div>}
         </div>
         <div className="grid gap-2 mt-3">
           <input className="input text-sm" placeholder="Question text" value={newQ.question} onChange={(e) => setNewQ({ ...newQ, question: e.target.value })} />
