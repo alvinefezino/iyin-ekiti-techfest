@@ -56,6 +56,16 @@ create table if not exists hackathon_registrations (
   created_at timestamptz not null default now()
 );
 
+create table if not exists event_attendees (
+  id uuid primary key default gen_random_uuid(),
+  full_name text not null,
+  email text not null,
+  phone text,
+  team_name text,
+  team_members jsonb not null default '[]',
+  created_at timestamptz not null default now()
+);
+
 create table if not exists orders (
   id uuid primary key default gen_random_uuid(),
   reference text not null unique,
@@ -89,6 +99,7 @@ alter table settings enable row level security;
 alter table subscribers enable row level security;
 alter table broadcasts enable row level security;
 alter table hackathon_registrations enable row level security;
+alter table event_attendees enable row level security;
 alter table orders enable row level security;
 alter table tickets enable row level security;
 
@@ -104,6 +115,7 @@ create policy "admin_settings" on settings for all using (is_admin()) with check
 create policy "admin_subs" on subscribers for all using (is_admin()) with check (is_admin());
 create policy "admin_broadcasts" on broadcasts for all using (is_admin()) with check (is_admin());
 create policy "admin_regs" on hackathon_registrations for select using (is_admin());
+create policy "admin_attendees" on event_attendees for select using (is_admin());
 create policy "admin_orders" on orders for select using (is_admin());
 create policy "admin_tickets" on tickets for select using (is_admin());
 create policy "admin_self" on admins for select using (user_id = auth.uid());

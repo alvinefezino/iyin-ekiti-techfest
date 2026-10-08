@@ -2,7 +2,7 @@ export type Item = Record<string, string>;
 export type Block = { id: string; type: BlockType; props: Record<string, any> };
 export type BlockType =
   | "hero" | "about" | "tracks" | "schedule" | "prizes" | "speakers" | "sponsors"
-  | "faq" | "register" | "tickets" | "newsletter" | "text" | "image" | "cta" | "footer";
+  | "faq" | "register" | "attendees" | "tickets" | "newsletter" | "text" | "image" | "cta" | "footer";
 
 export type Field =
   | { key: string; label: string; kind: "text" | "textarea" | "image" }
@@ -128,7 +128,12 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
   },
   register: {
     label: "Hackathon registration form", nav: true,
-    defaults: { heading: "Register", body: "Lorem ipsum dolor sit amet. Sign up your team before spots run out." },
+    defaults: { heading: "Register for the hackathon", body: "Lorem ipsum dolor sit amet. Sign up your team before spots run out." },
+    fields: [{ key: "heading", label: "Heading", kind: "text" }, { key: "body", label: "Body", kind: "textarea" }],
+  },
+  attendees: {
+    label: "Event registration form (attendees)", nav: true,
+    defaults: { heading: "Register for the event", body: "Secure your spot at Iyin-Ekiti TechFest. General attendance \u2014 no team needed." },
     fields: [{ key: "heading", label: "Heading", kind: "text" }, { key: "body", label: "Body", kind: "textarea" }],
   },
   tickets: {

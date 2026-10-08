@@ -127,6 +127,40 @@ export function RegistrationsPanel() {
   );
 }
 
+export function AttendeesPanel() {
+  const [rows, setRows] = useState<any[]>([]);
+  useEffect(() => { sb().from("event_attendees").select("*").order("created_at", { ascending: false }).then(({ data }) => setRows(data ?? [])); }, []);
+  const csv = () => {
+    const head = ["full_name", "email", "phone", "team_name", "team_members", "created_at"];
+    const esc = (v: any) => '"' + String(Array.isArray(v) ? v.join("; ") : v ?? "").replace(/"/g, '""') + '"';
+    const out = [head.join(","), ...rows.map((r) => head.map((h) => esc(r[h])).join(","))].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([out], { type: "text/csv" }));
+    a.download = "attendees.csv";
+    a.click();
+  };
+  return (
+    <div className="glass p-4">
+      <div className="flex justify-between items-center mb-3">
+        <h2 className="font-semibold">Event attendees ({rows.length})</h2>
+        <button className="btn-ghost !py-1 text-sm" onClick={csv}>Download CSV</button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[40rem]">
+          <thead><tr className="text-left text-muted"><th className="py-1">Name</th><th>Email</th><th>Phone</th><th>Team</th><th>Members</th></tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id} className="border-t border-white/10 align-top">
+                <td className="py-1">{r.full_name}</td><td>{r.email}</td><td>{r.phone}</td><td>{r.team_name}</td><td>{(r.team_members ?? []).join(", ")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export function CheckinPanel() {
   const [code, setCode] = useState("");
   const [result, setResult] = useState("");

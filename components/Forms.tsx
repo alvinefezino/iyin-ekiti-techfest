@@ -58,6 +58,34 @@ export function RegisterForm() {
   );
 }
 
+export function AttendeesForm() {
+  const [f, setF] = useState({ full_name: "", email: "", phone: "", team_name: "", members: "" });
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
+  return (
+    <form
+      className="glass p-5 grid gap-3 max-w-xl"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true);
+        const { ok, data } = await post("/api/attendees", f);
+        setMsg(ok ? "You are registered for the event. Check your email for confirmation." : data.error || "Something went wrong. Try again.");
+        if (ok) setF({ full_name: "", email: "", phone: "", team_name: "", members: "" });
+        setBusy(false);
+      }}
+    >
+      <input className="input" required placeholder="Full name" value={f.full_name} onChange={set("full_name")} />
+      <input className="input" required type="email" placeholder="Email" value={f.email} onChange={set("email")} />
+      <input className="input" placeholder="Phone number" value={f.phone} onChange={set("phone")} />
+      <input className="input" placeholder="Team name (optional)" value={f.team_name} onChange={set("team_name")} />
+      <textarea className="input" rows={3} placeholder="Team members, one per line (optional)" value={f.members} onChange={set("members")} />
+      <button className="btn-primary" disabled={busy}>{busy ? "Registering..." : "Register for event"}</button>
+      {msg && <p className="text-sm text-teal">{msg}</p>}
+    </form>
+  );
+}
+
 export function TicketForm({ name, price }: { name: string; price: number }) {
   const [f, setF] = useState({ full_name: "", email: "", quantity: 1 });
   const [msg, setMsg] = useState("");

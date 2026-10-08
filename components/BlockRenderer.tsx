@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import type { Block } from "@/lib/blocks";
 import HeroBlock from "@/components/blocks/HeroBlock";
-import { NewsletterForm, RegisterForm, TicketForm } from "@/components/Forms";
+import { NewsletterForm, RegisterForm, AttendeesForm, TicketForm } from "@/components/Forms";
 
 type Item = Record<string, string>;
 const items = (b: Block): Item[] => (Array.isArray(b.props.items) ? b.props.items : []);
@@ -250,6 +250,14 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
           <h2>{p.heading}</h2>
           <p className="text-muted mb-5 max-w-xl">{p.body}</p>
           <RegisterForm />
+        </div>
+      );
+    case "attendees":
+      return (
+        <div className="section" id={b.id}>
+          <h2>{p.heading}</h2>
+          <p className="text-muted mb-5 max-w-xl">{p.body}</p>
+          <AttendeesForm />
         </div>
       );
     case "tickets":
