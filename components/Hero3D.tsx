@@ -22,7 +22,7 @@ function drawScreen(ctx: CanvasRenderingContext2D, r: Remaining) {
   ctx.textAlign = "center";
   ctx.fillStyle = "#8fb5a5";
   ctx.font = "500 34px monospace";
-  ctx.fillText("hackathon.starts_in()", W / 2, 130);
+  ctx.fillText("event.starts_in()", W / 2, 130);
   const cols = [
     [String(r.days), "DAYS"], [pad(r.hours), "HOURS"], [pad(r.minutes), "MIN"], [pad(r.seconds), "SEC"],
   ];
