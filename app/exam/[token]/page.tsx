@@ -1,5 +1,7 @@
 import ExamTerminal from "@/components/exam/ExamTerminal";
-export default async function Page({ params }: { params: Promise<{ token: string }> }) {
+export default async function Page({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ preview?: string }> }) {
   const { token } = await params;
-  return <ExamTerminal token={token} />;
+  const sp = await searchParams;
+  const preview = sp?.preview === "1";
+  return <ExamTerminal token={token} preview={preview} />;
 }

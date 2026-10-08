@@ -13,7 +13,8 @@ function XIcon() {
   );
 }
 
-export default function ExamTerminal({ token }: { token: string }) {
+export default function ExamTerminal({ token, preview }: { token: string; preview?: boolean }) {
+  const isPreview = !!preview;
   const [invite, setInvite] = useState<Invite | null>(null);
   const [questions, setQuestions] = useState<Q[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,7 @@ export default function ExamTerminal({ token }: { token: string }) {
   const [submitted, setSubmitted] = useState<{ score: number; total: number } | null>(null);
   const [disqualified, setDisqualified] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 min for 50 Q
+  const [timeLeft, setTimeLeft] = useState(20 * 60); // 20 min for 50 Q
   const disqualifiedRef = useRef(false);
   const submittedRef = useRef(false);
 
@@ -56,12 +57,12 @@ export default function ExamTerminal({ token }: { token: string }) {
     if (!res.ok) { setErr(j.error ?? "Cannot start"); return; }
     setStarted(true);
     // try fullscreen
-    try { await document.documentElement.requestFullscreen?.(); } catch {}
+    if (!isPreview) try { await document.documentElement.requestFullscreen?.(); } catch {}
   }, [token]);
 
   // Timer
   useEffect(() => {
-    if (!started || disqualified || submitted || loading) return;
+    if (isPreview || !started || disqualified || submitted || loading) return;
     const id = setInterval(() => setTimeLeft((t) => {
       if (t <= 1) { clearInterval(id); handleSubmit(); return 0; }
       return t - 1;
@@ -71,6 +72,7 @@ export default function ExamTerminal({ token }: { token: string }) {
 
   // Lockdown listeners
   useEffect(() => {
+    if (isPreview) return;
     if (!started || disqualified || submitted) return;
 
     const block = (e: Event, reason: string) => { e.preventDefault(); doDisqualify(reason); };
@@ -158,7 +160,7 @@ export default function ExamTerminal({ token }: { token: string }) {
       <div className="min-h-screen grid place-items-center bg-[#013216] text-white p-6">
         <div className="bg-black border border-[#F57F17]/30 rounded-2xl p-8 max-w-lg w-full">
           <h1 className="text-2xl font-semibold">Exam Terminal</h1>
-          <p className="text-white/70 text-sm mt-2">You are about to enter the FIESU Exam Terminal. 50 questions, 60 minutes.</p>
+          <p className="text-white/70 text-sm mt-2">You are about to enter the FIESU Exam Terminal. 50 questions, 20 minutes.</p>
           <ul className="text-sm text-white/60 list-disc pl-5 mt-4 space-y-1">
             <li>Do not copy, paste, screenshot, or leave the terminal.</li>
             <li>Switching tabs, minimizing, or exiting fullscreen will disqualify you.</li>
