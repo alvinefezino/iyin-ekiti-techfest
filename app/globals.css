@@ -78,8 +78,26 @@ body::before {
 .section { padding: 5rem 1.25rem; max-width: 72rem; margin: 0 auto; scroll-margin-top: 5rem; }
 .section h2 { font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 600; margin-bottom: 1.5rem; }
 
+@keyframes schedule-pulse {
+  0% { transform: scale(0.55); opacity: 0.75; }
+  55% { opacity: 0.22; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes schedule-pulse-2 {
+  0% { transform: scale(0.6); opacity: 0.55; }
+  100% { transform: scale(2.15); opacity: 0; }
+}
+@keyframes schedule-core {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.22); }
+}
+.schedule-pulse { animation: schedule-pulse 1.05s ease-out infinite; }
+.schedule-pulse-2 { animation: schedule-pulse-2 1.05s ease-out 0.38s infinite; }
+.schedule-core { animation: schedule-core 1.05s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  .schedule-pulse, .schedule-pulse-2, .schedule-core { animation: none !important; }
 }
 
 /* Solid-feeling glass for panels that need focus (menu, chat, cookie settings, navbar) */

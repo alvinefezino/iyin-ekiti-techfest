@@ -1,10 +1,132 @@
 "use client";
+import { useEffect, useState } from "react";
 import type { Block } from "@/lib/blocks";
 import HeroBlock from "@/components/blocks/HeroBlock";
 import { NewsletterForm, RegisterForm, TicketForm } from "@/components/Forms";
 
 type Item = Record<string, string>;
 const items = (b: Block): Item[] => (Array.isArray(b.props.items) ? b.props.items : []);
+
+// --- Schedule helpers: parse "9:00 AM" -> minutes since midnight ---
+function parseTimeMinutes(raw: string): number | null {
+  const s = raw.trim();
+  const m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?)?$/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = m[2] ? parseInt(m[2], 10) : 0;
+  const ap = (m[3] || "").replace(/\./g, "").toLowerCase();
+  if (ap === "pm" && h !== 12) h += 12;
+  if (ap === "am" && h === 12) h = 0;
+  if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+  return h * 60 + min;
+}
+
+function ScheduleBlock({ heading, list, id }: { heading: string; list: Item[]; id: string }) {
+  // client-only clock to avoid hydration mismatch: start as null, tick after mount
+  const [nowMin, setNowMin] = useState<number | null>(null);
+
+  useEffect(() => {
+    const tick = () => {
+      const d = new Date();
+      setNowMin(d.getHours() * 60 + d.getMinutes());
+    };
+    tick();
+    const t = setInterval(tick, 30_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const parsed = list.map((s) => parseTimeMinutes(s.time || ""));
+  // active = the last item whose time <= now and (next time is null or now < next time)
+  let activeIndex: number | null = null;
+  if (nowMin !== null) {
+    for (let i = 0; i < parsed.length; i++) {
+      const cur = parsed[i];
+      if (cur === null) continue;
+      const next = parsed.slice(i + 1).find((v) => v !== null) ?? null;
+      if (nowMin >= cur && (next === null || nowMin < next)) {
+        activeIndex = i;
+        break;
+      }
+    }
+    // before first event -> no active; after last event -> last stays active (until midnight)
+  }
+
+  return (
+    <div className="section" id={id}>
+      <h2>{heading}</h2>
+      <ol className="border-l border-white/15 ml-2 grid gap-6">
+        {list.map((s, i) => {
+          const isActive = activeIndex === i;
+          const isPast = activeIndex !== null && i < activeIndex;
+          return (
+            <li
+              key={i}
+              className={
+                "pl-6 relative rounded-xl transition-all duration-300 " +
+                (isActive
+                  ? "py-4 -my-1 bg-teal/[0.09] border border-teal/25 shadow-[0_0_0_1px_rgba(20,184,166,0.18),0_8px_28px_rgba(20,184,166,0.18)]"
+                  : "py-1 border border-transparent")
+              }
+            >
+              {/* circle tab — active is BIG, glowing, dual-halo */}
+              <span
+                aria-hidden
+                className={
+                  "absolute grid place-items-center rounded-full transition-all duration-300 " +
+                  (isActive
+                    ? "-left-[10px] top-[22px] w-5 h-5 bg-teal border-[3px] border-white shadow-[0_0_0_4px_rgba(20,184,166,0.35),0_0_18px_rgba(20,184,166,0.95),0_0_36px_rgba(20,184,166,0.55)]"
+                    : isPast
+                      ? "-left-[7px] top-1.5 w-3 h-3 bg-teal/30 border-2 border-teal/45"
+                      : "-left-[7px] top-1.5 w-3 h-3 bg-white/10 border-2 border-white/25")
+                }
+              >
+                {isActive && (
+                  <>
+                    <span className="absolute inset-[-10px] rounded-full bg-teal/35 schedule-pulse pointer-events-none" />
+                    <span className="absolute inset-[-16px] rounded-full border border-teal/25 bg-teal/[0.08] schedule-pulse-2 pointer-events-none" />
+                    <span className="absolute inset-[-3px] rounded-full bg-white/20 blur-[2px] pointer-events-none" />
+                  </>
+                )}
+                {isActive && (
+                  <span className="relative w-2 h-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,1)] schedule-core" />
+                )}
+              </span>
+
+              <div
+                className={
+                  "font-mono text-sm transition-colors flex flex-wrap items-center gap-2 " +
+                  (isActive ? "text-teal font-extrabold drop-shadow-[0_0_8px_rgba(20,184,166,0.45)]" : isPast ? "text-teal/60" : "text-muted")
+                }
+              >
+                <span>{s.time}</span>
+                {isActive && (
+                  <span className="inline-flex items-center gap-1.5 text-[11px] tracking-[0.14em] uppercase px-2.5 py-1 rounded-full bg-teal text-bg font-sans font-black shadow-[0_0_14px_rgba(20,184,166,0.7),0_0_28px_rgba(20,184,166,0.4)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.9)] animate-pulse" />
+                    Live
+                  </span>
+                )}
+              </div>
+              <div
+                className={
+                  "font-medium transition-colors mt-0.5 " +
+                  (isActive
+                    ? "text-[19px] leading-tight font-bold text-white drop-shadow-[0_1px_10px_rgba(20,184,166,0.25)]"
+                    : isPast
+                      ? "text-lg text-ink/60"
+                      : "text-lg text-ink")
+                }
+              >
+                {s.title}
+              </div>
+              <p className={"text-sm leading-relaxed mt-1 " + (isActive ? "text-white/80" : "text-muted")}>{s.body}</p>
+              <Photo src={s.image} alt={s.title} className="mt-3 max-h-56 max-w-md" />
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
 
 function Card({ children }: { children: React.ReactNode }) {
   return <div className="glass p-5">{children}</div>;
@@ -64,22 +186,7 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
         </div>
       );
     case "schedule":
-      return (
-        <div className="section" id={b.id}>
-          <h2>{p.heading}</h2>
-          <ol className="border-l border-white/20 ml-2 grid gap-6">
-            {items(b).map((s, i) => (
-              <li key={i} className="pl-6 relative">
-                <span className="absolute -left-[5px] top-2 w-2.5 h-2.5 rounded-full bg-teal" />
-                <div className="font-mono text-sm text-teal">{s.time}</div>
-                <div className="font-medium text-lg">{s.title}</div>
-                <p className="text-muted text-sm">{s.body}</p>
-                <Photo src={s.image} alt={s.title} className="mt-3 max-h-56 max-w-md" />
-              </li>
-            ))}
-          </ol>
-        </div>
-      );
+      return <ScheduleBlock heading={p.heading} list={items(b)} id={b.id} />;
     case "prizes":
       return (
         <div className="section" id={b.id}>

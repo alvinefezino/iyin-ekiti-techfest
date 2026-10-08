@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SITE } from "@/lib/site";
 
@@ -12,19 +12,22 @@ const ICONS = [
 ];
 const base = "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/";
 
+type LoaderItem = { src: string; left: number; delay: number; dur: number; size: number };
+
 export default function Loader() {
   const [show, setShow] = useState(true);
-  const items = useMemo(
-    () => Array.from({ length: 28 }, (_, i) => ({
-      src: `${base}${ICONS[i % ICONS.length]}.svg`,
-      left: Math.random() * 94,
-      delay: Math.random() * 1.4,
-      dur: 1.2 + Math.random() * 1.2,
-      size: 28 + Math.random() * 22,
-    })),
-    []
-  );
+  const [items, setItems] = useState<LoaderItem[]>([]);
+
   useEffect(() => {
+    setItems(
+      Array.from({ length: 28 }, (_, i) => ({
+        src: `${base}${ICONS[i % ICONS.length]}.svg`,
+        left: Math.random() * 94,
+        delay: Math.random() * 1.4,
+        dur: 1.2 + Math.random() * 1.2,
+        size: 28 + Math.random() * 22,
+      }))
+    );
     const t = setTimeout(() => setShow(false), 3000);
     return () => clearTimeout(t);
   }, []);
