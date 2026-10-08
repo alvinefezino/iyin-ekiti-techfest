@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import Backdrop from "@/components/Backdrop";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -39,6 +40,8 @@ export default function Chatbot() {
   }
 
   return (
+    <>
+    <Backdrop show={open} onClick={() => setOpen(false)} z="z-[54]" />
     <div className="fixed bottom-4 right-4 z-[55]">
       <AnimatePresence>
         {open && (
@@ -46,7 +49,7 @@ export default function Chatbot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="glass-strong mb-3 w-[min(92vw,22rem)] h-[26rem] flex flex-col overflow-hidden"
+            className="glass-modal mb-3 w-[min(92vw,22rem)] h-[26rem] flex flex-col overflow-hidden"
           >
             <div className="px-4 py-3 border-b border-white/15 font-medium">TechFest assistant</div>
             <div className="flex-1 overflow-y-auto p-3 grid gap-2 content-start">
@@ -68,5 +71,6 @@ export default function Chatbot() {
         {open ? "Close" : "Ask AI"}
       </button>
     </div>
+    </>
   );
 }

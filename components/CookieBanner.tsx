@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import Backdrop from "@/components/Backdrop";
 
 type Consent = { essential: true; analytics: boolean; marketing: boolean };
 const KEY = "cookie-consent";
@@ -21,13 +22,15 @@ export default function CookieBanner({ text }: { text: string }) {
   };
 
   return (
+    <>
+    <Backdrop show={show && manage} onClick={() => setManage(false)} z="z-[59]" />
     <AnimatePresence>
       {show && (
         <motion.div
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 40, opacity: 0 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] w-[min(94vw,34rem)] glass-strong p-4"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] w-[min(94vw,34rem)] glass-modal p-4"
           role="dialog"
           aria-label="Cookie settings"
         >
@@ -49,5 +52,6 @@ export default function CookieBanner({ text }: { text: string }) {
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 }

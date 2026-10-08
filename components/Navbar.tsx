@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { SITE } from "@/lib/site";
 import { BLOCK_DEFS, type Block } from "@/lib/blocks";
 import { pad, useCountdown } from "@/hooks/useCountdown";
+import Backdrop from "@/components/Backdrop";
 
 export default function Navbar({ blocks, heroVisible }: { blocks: Block[]; heroVisible: boolean }) {
   const c = useCountdown();
@@ -12,7 +13,8 @@ export default function Navbar({ blocks, heroVisible }: { blocks: Block[]; heroV
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 p-3">
-      <nav className="glass-strong max-w-6xl mx-auto flex items-center justify-between gap-3 px-4 py-2">
+      <Backdrop show={open} onClick={() => setOpen(false)} z="-z-10" />
+      <nav className="glass-modal max-w-6xl mx-auto flex items-center justify-between gap-3 px-4 py-2">
         <a href="#" className="flex items-center gap-2 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={SITE.logo} alt={SITE.name} className="h-8 w-auto rounded" />
@@ -48,7 +50,7 @@ export default function Navbar({ blocks, heroVisible }: { blocks: Block[]; heroV
         </button>
       </nav>
       {open && (
-        <div className="md:hidden glass-strong max-w-6xl mx-auto mt-2 p-4 flex flex-col gap-3">
+        <div className="md:hidden glass-modal max-w-6xl mx-auto mt-2 p-4 flex flex-col gap-3">
           {links.map((b) => (
             <a key={b.id} href={`#${b.id}`} onClick={() => setOpen(false)}>
               {b.props.heading}
