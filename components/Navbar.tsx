@@ -29,7 +29,7 @@ export default function Navbar({ blocks, heroVisible }: { blocks: Block[]; heroV
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.6, y: 20 }}
               transition={{ type: "spring", stiffness: 260, damping: 22 }}
-              className="font-mono text-sm text-countdown px-3 py-1 rounded-full border border-white/20 bg-white/10"
+              className="font-mono text-sm text-[#facc15] px-3 py-1 rounded-full border border-[#facc15]/30 bg-[#facc15]/10 shadow-[0_0_12px_rgba(250,204,21,0.35)]"
               aria-label="Time until the event"
             >
               {c.days}d {pad(c.hours)}:{pad(c.minutes)}:{pad(c.seconds)}

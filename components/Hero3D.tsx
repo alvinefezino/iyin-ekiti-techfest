@@ -28,16 +28,22 @@ function drawScreen(ctx: CanvasRenderingContext2D, r: Remaining) {
   ];
   cols.forEach(([v, l], i) => {
     const x = 130 + i * 255;
-    ctx.fillStyle = "#ff4d4d";
+    ctx.fillStyle = "#facc15";
+    ctx.shadowColor = "rgba(250,204,21,0.55)";
+    ctx.shadowBlur = 18;
     ctx.font = "700 150px monospace";
     ctx.fillText(v, x, 340);
+    ctx.shadowBlur = 0;
     ctx.fillStyle = "#8fb5a5";
     ctx.font = "500 30px monospace";
     ctx.fillText(l, x, 400);
     if (i < 3) {
-      ctx.fillStyle = "#ff4d4d";
+      ctx.fillStyle = "#facc15";
+      ctx.shadowColor = "rgba(250,204,21,0.45)";
+      ctx.shadowBlur = 14;
       ctx.font = "700 120px monospace";
       ctx.fillText(":", x + 128, 330);
+      ctx.shadowBlur = 0;
     }
   });
   ctx.fillStyle = "#14b8a6";
