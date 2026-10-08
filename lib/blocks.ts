@@ -14,7 +14,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     defaults: {
       eyebrow: "Thinking Beyond Borders",
       title: "Iyin-Ekiti TechFest",
-      subtitle: "A hackathon powered by Fiesu and FUTES Gotham Mafians. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      subtitle: "A hackathon powered by Fiesu and FUTES Gotham Mafians. 7 November 2026, 9:00 AM to 5:00 PM.",
       ctaLabel: "Register for the hackathon",
       ctaHref: "#register",
     },
@@ -32,7 +32,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
       heading: "About the hackathon",
       body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
       items: [
-        { value: "48h", label: "Of non-stop building" },
+        { value: "9AM-5PM", label: "7 November 2026" },
         { value: "100+", label: "Hackers" },
         { value: "10", label: "Mentors" },
       ],
@@ -64,9 +64,9 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     defaults: {
       heading: "Schedule",
       items: [
-        { time: "Day 1, 9:00 AM", title: "Opening ceremony", body: "Lorem ipsum dolor sit amet." },
-        { time: "Day 1, 11:00 AM", title: "Hacking begins", body: "Consectetur adipiscing elit." },
-        { time: "Day 2, 4:00 PM", title: "Final pitches", body: "Sed do eiusmod tempor." },
+        { time: "9:00 AM", title: "Opening ceremony", body: "Lorem ipsum dolor sit amet." },
+        { time: "10:00 AM", title: "Hacking begins", body: "Consectetur adipiscing elit." },
+        { time: "4:00 PM", title: "Final pitches and awards", body: "Sed do eiusmod tempor." },
       ],
     },
     fields: [
@@ -79,9 +79,9 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     defaults: {
       heading: "Prizes",
       items: [
-        { place: "1st place", prize: "₦000,000 + mentorship" },
-        { place: "2nd place", prize: "₦000,000" },
-        { place: "3rd place", prize: "₦000,000" },
+        { place: "1st place", prize: "₦100,000" },
+        { place: "2nd place", prize: "₦75,000" },
+        { place: "3rd place", prize: "₦50,000" },
       ],
     },
     fields: [
