@@ -55,13 +55,13 @@ export default function Loader() {
             />
           ))}
           <motion.div
-            className="relative z-10 glass-strong px-6 py-5"
+            className="relative z-10 glass-strong px-6 py-5 bg-white/90"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 1.2, duration: 0.5 }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={SITE.logo} alt={SITE.name} className="w-56 max-w-[70vw] rounded-lg" />
+            <img src={(SITE as any).logoBlack || "/logo-black.jpg"} alt={SITE.name} className="w-56 max-w-[70vw] rounded-xl bg-white p-3 shadow-[0_8px_32px_rgba(0,0,0,0.35)]" style={{ filter: "contrast(1.15) brightness(0.98)" }} />
           </motion.div>
         </motion.div>
       )}
