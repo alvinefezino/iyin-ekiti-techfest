@@ -17,7 +17,7 @@ export default function Navbar({ blocks, heroVisible }: { blocks: Block[]; heroV
       <nav className="glass-modal max-w-6xl mx-auto flex items-center justify-between gap-3 px-4 py-2">
         <a href="#" className="flex items-center gap-2 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={SITE.logo} alt={SITE.name} className="h-8 w-auto rounded" />
+          <img src={SITE.logo} alt={SITE.name} className="h-10 w-auto rounded-lg bg-white p-1 shadow-[0_0_12px_rgba(255,255,255,0.25)]" style={{ filter: "contrast(1.2) brightness(1.08)" }} />
         </a>
 
         <AnimatePresence>

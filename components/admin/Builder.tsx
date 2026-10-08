@@ -154,7 +154,7 @@ export default function Builder() {
     if (notify) {
       const res = await fetch("/api/admin/broadcast", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject: "The TechFest site was updated", body: `We've updated the Iyin-Ekiti TechFest website with new details. Visit ${SITE.url} to see what's new.` }) });
       const j = await res.json().catch(() => ({}));
-      setStatus(res.ok ? `Published. Emailed ${j.sent} subscribers.` : `Published. Email failed: ${j.error}`);
+      setStatus(res.ok ? `Published. Emailed ${j.sent} subscribers.` : `Published. Email failed: ${String(j.error ?? "").slice(0, 400)}`);
     } else setStatus("Published");
     const { data: v } = await sb.from("page_versions").select("id,created_at,blocks").eq("slug", "home").order("id", { ascending: false }).limit(10);
     setVersions((v as any) ?? []);
