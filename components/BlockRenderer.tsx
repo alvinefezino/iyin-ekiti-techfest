@@ -10,6 +10,18 @@ function Card({ children }: { children: React.ReactNode }) {
   return <div className="glass p-5">{children}</div>;
 }
 
+function Avatar({ src, name }: { src?: string; name?: string }) {
+  const initials = (name || "?").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  // eslint-disable-next-line @next/next/no-img-element
+  return src ? <img src={src} alt={name || ""} className="w-full aspect-square object-cover rounded-xl mb-3" />
+    : <div className="w-full aspect-square rounded-xl mb-3 grid place-items-center bg-emerald/30 text-3xl font-semibold text-teal">{initials}</div>;
+}
+
+function Photo({ src, alt, className = "" }: { src?: string; alt?: string; className?: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return src ? <img src={src} alt={alt || ""} className={`w-full object-cover rounded-xl ${className}`} /> : null;
+}
+
 function Img({ src, alt, className }: { src?: string; alt?: string; className?: string }) {
   // eslint-disable-next-line @next/next/no-img-element
   return src ? <img src={src} alt={alt || ""} className={className} /> : <div className={`${className} bg-white/10`} />;
@@ -25,6 +37,7 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
         <div className="section" id={b.id}>
           <h2>{p.heading}</h2>
           <p className="text-muted max-w-2xl leading-relaxed">{p.body}</p>
+          <Photo src={p.image} alt={p.heading} className="mt-6 max-h-96" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
             {items(b).map((s, i) => (
               <Card key={i}>
@@ -42,6 +55,7 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
           <div className="grid md:grid-cols-3 gap-4">
             {items(b).map((t, i) => (
               <Card key={i}>
+                <Photo src={t.image} alt={t.title} className="aspect-video mb-3" />
                 <h3 className="font-medium text-lg">{t.title}</h3>
                 <p className="text-muted mt-2 text-sm">{t.body}</p>
               </Card>
@@ -60,6 +74,7 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
                 <div className="font-mono text-sm text-teal">{s.time}</div>
                 <div className="font-medium text-lg">{s.title}</div>
                 <p className="text-muted text-sm">{s.body}</p>
+                <Photo src={s.image} alt={s.title} className="mt-3 max-h-56 max-w-md" />
               </li>
             ))}
           </ol>
@@ -72,6 +87,7 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
           <div className="grid md:grid-cols-3 gap-4">
             {items(b).map((x, i) => (
               <Card key={i}>
+                <Photo src={x.image} alt={x.place} className="aspect-video mb-3" />
                 <div className="text-accent font-medium">{x.place}</div>
                 <div className="text-xl mt-2">{x.prize}</div>
               </Card>
@@ -86,7 +102,7 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {items(b).map((s, i) => (
               <Card key={i}>
-                <Img src={s.image} alt={s.name} className="w-full aspect-square object-cover rounded-xl mb-3" />
+                <Avatar src={s.image} name={s.name} />
                 <div className="font-medium">{s.name}</div>
                 <div className="text-muted text-sm">{s.role}</div>
               </Card>
@@ -152,6 +168,7 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
         <div className="section" id={b.id}>
           <h2>{p.heading}</h2>
           <p className="text-muted max-w-2xl whitespace-pre-line leading-relaxed">{p.body}</p>
+          <Photo src={p.image} alt={p.heading} className="mt-6 max-h-96" />
         </div>
       );
     case "image":

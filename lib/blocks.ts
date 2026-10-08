@@ -40,6 +40,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     fields: [
       { key: "heading", label: "Heading", kind: "text" },
       { key: "body", label: "Body", kind: "textarea" },
+      { key: "image", label: "Photo (optional)", kind: "image" },
       { key: "items", label: "Stats", kind: "items", fields: [{ key: "value", label: "Value", kind: "text" }, { key: "label", label: "Label", kind: "text" }] },
     ],
   },
@@ -55,7 +56,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     },
     fields: [
       { key: "heading", label: "Heading", kind: "text" },
-      { key: "items", label: "Tracks", kind: "items", fields: [{ key: "title", label: "Title", kind: "text" }, { key: "body", label: "Description", kind: "textarea" }] },
+      { key: "items", label: "Tracks", kind: "items", fields: [{ key: "title", label: "Title", kind: "text" }, { key: "body", label: "Description", kind: "textarea" }, { key: "image", label: "Photo (optional)", kind: "image" }] },
     ],
   },
   schedule: {
@@ -70,7 +71,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     },
     fields: [
       { key: "heading", label: "Heading", kind: "text" },
-      { key: "items", label: "Sessions", kind: "items", fields: [{ key: "time", label: "Time", kind: "text" }, { key: "title", label: "Title", kind: "text" }, { key: "body", label: "Description", kind: "textarea" }] },
+      { key: "items", label: "Sessions", kind: "items", fields: [{ key: "time", label: "Time", kind: "text" }, { key: "title", label: "Title", kind: "text" }, { key: "body", label: "Description", kind: "textarea" }, { key: "image", label: "Photo (optional)", kind: "image" }] },
     ],
   },
   prizes: {
@@ -85,7 +86,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     },
     fields: [
       { key: "heading", label: "Heading", kind: "text" },
-      { key: "items", label: "Prizes", kind: "items", fields: [{ key: "place", label: "Place", kind: "text" }, { key: "prize", label: "Prize", kind: "text" }] },
+      { key: "items", label: "Prizes", kind: "items", fields: [{ key: "place", label: "Place", kind: "text" }, { key: "prize", label: "Prize", kind: "text" }, { key: "image", label: "Photo (optional)", kind: "image" }] },
     ],
   },
   speakers: {
@@ -148,7 +149,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
   text: {
     label: "Text section", nav: true,
     defaults: { heading: "Section heading", body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
-    fields: [{ key: "heading", label: "Heading", kind: "text" }, { key: "body", label: "Body", kind: "textarea" }],
+    fields: [{ key: "heading", label: "Heading", kind: "text" }, { key: "body", label: "Body", kind: "textarea" }, { key: "image", label: "Photo (optional)", kind: "image" }],
   },
   image: {
     label: "Image",

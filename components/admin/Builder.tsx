@@ -8,24 +8,42 @@ type Sub = { key: string; label: string; kind: "text" | "textarea" | "image" };
 
 function Leaf({ f, value, onChange }: { f: Sub | Field; value: string; onChange: (v: string) => void }) {
   const [up, setUp] = useState(false);
+  const [err, setErr] = useState("");
   if (f.kind === "textarea") return <textarea className="input" rows={3} value={value ?? ""} onChange={(e) => onChange(e.target.value)} />;
   if (f.kind === "image")
     return (
-      <div className="flex gap-2">
-        <input className="input" placeholder="Image URL" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
-        <label className="btn-ghost !px-3 !py-1.5 text-sm shrink-0">
-          {up ? "…" : "Upload"}
-          <input type="file" accept="image/*" hidden onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            setUp(true);
-            const sb = supabaseBrowser();
-            const path = `${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`;
-            const { error } = await sb.storage.from("media").upload(path, file);
-            if (!error) onChange(sb.storage.from("media").getPublicUrl(path).data.publicUrl);
-            setUp(false);
-          }} />
-        </label>
+      <div className="grid gap-2">
+        <div className="flex items-center gap-3">
+          {value ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={value} alt="" className="w-16 h-16 rounded-lg object-cover border border-white/20" />
+          ) : (
+            <div className="w-16 h-16 rounded-lg border border-dashed border-white/30 grid place-items-center text-[10px] text-muted text-center">No photo</div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <label className="btn-primary !px-3 !py-1.5 text-sm">
+              {up ? "Uploading…" : value ? "Change photo" : "Upload photo"}
+              <input type="file" accept="image/*" hidden disabled={up} onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                setErr("");
+                if (!file.type.startsWith("image/")) return setErr("Choose an image file.");
+                if (file.size > 5 * 1024 * 1024) return setErr("Image is over 5 MB. Use a smaller one.");
+                setUp(true);
+                const sb = supabaseBrowser();
+                const path = `${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, "_")}`;
+                const { error } = await sb.storage.from("media").upload(path, file, { contentType: file.type });
+                if (error) setErr(`Upload failed: ${error.message}`);
+                else onChange(sb.storage.from("media").getPublicUrl(path).data.publicUrl);
+                setUp(false);
+              }} />
+            </label>
+            {value && <button type="button" className="btn-ghost !px-3 !py-1.5 text-sm text-countdown" onClick={() => onChange("")}>Remove</button>}
+          </div>
+        </div>
+        <input className="input !py-1.5 text-xs" placeholder="or paste an image link" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
+        {err && <p className="text-xs text-countdown">{err}</p>}
       </div>
     );
   return <input className="input" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />;
@@ -167,6 +185,7 @@ export default function Builder() {
             <div key={b.id} className="glass p-3">
               <div className="flex items-center gap-2">
                 <button className="flex-1 text-left font-medium" onClick={() => setOpen(open === b.id ? null : b.id)}>{BLOCK_DEFS[b.type].label}</button>
+                <button className={`!px-3 !py-0.5 text-xs ${open === b.id ? "btn-primary" : "btn-ghost"}`} onClick={() => setOpen(open === b.id ? null : b.id)}>{open === b.id ? "Close" : "Edit"}</button>
                 <button className="btn-ghost !px-2 !py-0.5 text-xs" onClick={() => move(i, -1)}>Up</button>
                 <button className="btn-ghost !px-2 !py-0.5 text-xs" onClick={() => move(i, 1)}>Down</button>
                 <button className="btn-ghost !px-2 !py-0.5 text-xs text-countdown" onClick={() => { if (confirm("Remove this section?")) setBlocks(blocks.filter((_, j) => j !== i)); }}>Remove</button>
