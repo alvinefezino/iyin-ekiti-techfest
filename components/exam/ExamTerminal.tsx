@@ -23,11 +23,14 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
   const [current, setCurrent] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<{ score: number; total: number } | null>(null);
-  const [disqualified, setDisqualified] = useState<string | null>(null);
+  const [violation, setViolation] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(20 * 60); // 20 min for 50 Q
-  const disqualifiedRef = useRef(false);
+  const violationRef = useRef(false);
   const submittedRef = useRef(false);
+  const answersRef = useRef<Record<number, number>>({});
+
+  useEffect(() => { answersRef.current = answers; }, [answers]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -37,18 +40,39 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
     if (!res.ok) { setErr(j.error ?? "Failed to load exam"); setLoading(false); return; }
     setInvite(j.invite);
     setQuestions(j.questions ?? []);
-    if (j.invite?.status === "disqualified") setDisqualified(j.invite.disqualified_reason ?? "violation");
-    if (j.invite?.status === "submitted") setSubmitted({ score: j.invite.score ?? 0, total: 50 });
+    // restore state on reload: violation (even if submitted via violation) takes precedence
+    const hasViolation = !!j.invite?.disqualified_reason;
+    if (j.invite?.status === "disqualified" || (j.invite?.status === "submitted" && hasViolation)) {
+      setViolation(j.invite.disqualified_reason ?? "violation");
+      if (j.invite.score != null) setSubmitted({ score: j.invite.score ?? 0, total: 50 });
+    } else if (j.invite?.status === "submitted") setSubmitted({ score: j.invite.score ?? 0, total: 50 });
     setLoading(false);
   }, [token]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const doDisqualify = useCallback(async (reason: string) => {
-    if (disqualifiedRef.current || submittedRef.current) return;
-    disqualifiedRef.current = true;
-    setDisqualified(reason);
-    try { await fetch("/api/exam/disqualify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, reason }) }); } catch {}
+  const doViolationEarlySubmit = useCallback(async (reason: string) => {
+    if (violationRef.current || submittedRef.current) return;
+    violationRef.current = true;
+    submittedRef.current = true;
+    setViolation(reason);
+    // auto-submit current answers; lock terminal even if submit fails
+    try {
+      const res = await fetch("/api/exam/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, answers: answersRef.current, violationReason: reason }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.ok) setSubmitted({ score: j.score ?? 0, total: j.total ?? 50 });
+      else {
+        // fallback: still try disqualify endpoint for audit trail
+        await fetch("/api/exam/disqualify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, reason }) }).catch(() => {});
+      }
+    } catch {
+      try { await fetch("/api/exam/disqualify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, reason }) }); } catch {}
+    }
+    try { if (document.fullscreenElement) await document.exitFullscreen(); } catch {}
   }, [token]);
 
   const startExam = useCallback(async () => {
@@ -62,20 +86,20 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
 
   // Timer
   useEffect(() => {
-    if (isPreview || !started || disqualified || submitted || loading) return;
+    if (isPreview || !started || violation || submitted || loading) return;
     const id = setInterval(() => setTimeLeft((t) => {
       if (t <= 1) { clearInterval(id); handleSubmit(); return 0; }
       return t - 1;
     }), 1000);
     return () => clearInterval(id);
-  }, [started, disqualified, submitted, loading]);
+  }, [started, violation, submitted, loading]);
 
-  // Lockdown listeners
+  // Lockdown listeners — violation triggers early submission
   useEffect(() => {
     if (isPreview) return;
-    if (!started || disqualified || submitted) return;
+    if (!started || violation || submitted) return;
 
-    const block = (e: Event, reason: string) => { e.preventDefault(); doDisqualify(reason); };
+    const block = (e: Event, reason: string) => { e.preventDefault(); doViolationEarlySubmit(reason); };
 
     const onCopy = (e: ClipboardEvent) => block(e, "copy");
     const onCut = (e: ClipboardEvent) => block(e, "cut");
@@ -83,16 +107,16 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
     const onContext = (e: MouseEvent) => block(e, "copy");
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "PrintScreen") { e.preventDefault(); doDisqualify("screenshot"); return; }
+      if (e.key === "PrintScreen") { e.preventDefault(); doViolationEarlySubmit("screenshot"); return; }
       const k = e.key.toLowerCase();
-      if ((e.ctrlKey || e.metaKey) && ["c","v","x","a","s","p"].includes(k)) { e.preventDefault(); doDisqualify(k === "p" ? "screenshot" : "copy"); }
-      if (e.key === "F12" || ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i","j","c"].includes(k))) { e.preventDefault(); doDisqualify("copy"); }
+      if ((e.ctrlKey || e.metaKey) && ["c","v","x","a","s","p"].includes(k)) { e.preventDefault(); doViolationEarlySubmit(k === "p" ? "screenshot" : "copy"); }
+      if (e.key === "F12" || ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i","j","c"].includes(k))) { e.preventDefault(); doViolationEarlySubmit("copy"); }
     };
 
-    const onVisibility = () => { if (document.hidden) doDisqualify("exit"); };
-    const onBlur = () => doDisqualify("exit");
-    const onBeforeUnload = (e: BeforeUnloadEvent) => { doDisqualify("exit"); e.preventDefault(); e.returnValue = ""; };
-    const onFullscreen = () => { if (!document.fullscreenElement) doDisqualify("exit"); };
+    const onVisibility = () => { if (document.hidden) doViolationEarlySubmit("exit"); };
+    const onBlur = () => doViolationEarlySubmit("exit");
+    const onBeforeUnload = (e: BeforeUnloadEvent) => { doViolationEarlySubmit("exit"); e.preventDefault(); e.returnValue = ""; };
+    const onFullscreen = () => { if (!document.fullscreenElement) doViolationEarlySubmit("exit"); };
     const onDrag = (e: DragEvent) => e.preventDefault();
 
     document.addEventListener("copy", onCopy as any);
@@ -117,10 +141,10 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
       window.removeEventListener("beforeunload", onBeforeUnload);
       document.removeEventListener("fullscreenchange", onFullscreen);
     };
-  }, [started, disqualified, submitted, doDisqualify]);
+  }, [started, violation, submitted, doViolationEarlySubmit]);
 
   const handleSubmit = async () => {
-    if (submittedRef.current || disqualifiedRef.current) return;
+    if (submittedRef.current || violationRef.current) return;
     submittedRef.current = true;
     setSubmitting(true);
     const res = await fetch("/api/exam/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, answers }) });
@@ -133,13 +157,16 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
 
   if (loading) return <div className="min-h-screen grid place-items-center bg-[#013216] text-white">Loading Exam Terminal...</div>;
   if (err) return <div className="min-h-screen grid place-items-center bg-[#013216] text-white p-6 text-center"><div><p className="text-[#F57F17] font-semibold">{err}</p><p className="text-white/60 text-sm mt-2">Check your link or contact FIESU.</p></div></div>;
-  if (disqualified) {
+  if (violation) {
     return (
       <div className="fixed inset-0 z-50 grid place-items-center bg-[#000000]/80 backdrop-blur p-4">
         <div className="bg-[#013216] border border-[#F57F17] rounded-2xl p-8 max-w-sm w-full text-center">
           <div className="flex justify-center mb-4"><XIcon /></div>
-          <h2 className="text-white text-xl font-semibold">You are disqualified</h2>
-          <p className="text-white/60 text-sm mt-2">Reason: {disqualified}. The Exam Terminal is now locked. Contact FIESU if this was a mistake.</p>
+          <h2 className="text-white text-xl font-semibold">Early submission</h2>
+          <p className="text-white text-sm mt-2">You failed to follow the rules which resulted in the early submission of your answers.</p>
+          <p className="text-white/50 text-xs mt-2">Reason: {violation}. Your answers up to this point have been submitted automatically and can no longer be changed.</p>
+          {submitted && <p className="text-[#F57F17] text-2xl font-bold mt-4">{submitted.score} / {submitted.total}</p>}
+          {!submitted && <p className="text-white/60 text-xs mt-3">Saving your answers…</p>}
         </div>
       </div>
     );
@@ -164,7 +191,7 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
           <p className="text-white/70 text-sm mt-2">You are about to enter the FIESU Exam Terminal. 50 questions, 20 minutes.</p>
           <ul className="text-sm text-white/60 list-disc pl-5 mt-4 space-y-1">
             <li>Do not copy, paste, screenshot, or leave the terminal.</li>
-            <li>Switching tabs, minimizing, or exiting fullscreen will disqualify you.</li>
+            <li>Switching tabs, minimizing, or exiting fullscreen will submit your answers early.</li>
             <li>Right-click and keyboard shortcuts are disabled.</li>
             <li>One attempt only. Your answers auto-submit when time runs out.</li>
           </ul>
@@ -220,7 +247,7 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
             <button key={qq.id} onClick={() => setCurrent(idx)} className={`h-8 rounded-lg text-xs font-mono border ${idx === current ? "border-[#F57F17] bg-[#F57F17] text-black" : answers[qq.id] !== undefined ? "bg-white text-black border-white" : "bg-white/10 border-white/10 text-white/60"}`}>{idx + 1}</button>
           ))}
         </div>
-        <p className="text-xs text-white/40 mt-4 text-center">FIESU — copying, screenshots, or leaving this terminal will disqualify you.</p>
+        <p className="text-xs text-white/40 mt-4 text-center">FIESU — copying, screenshots, or leaving this terminal will submit your answers early.</p>
       </div>
     </div>
   );

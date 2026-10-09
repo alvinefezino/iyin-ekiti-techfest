@@ -1,53 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, supabaseAdmin } from "@/lib/supabase/server";
-import { shell } from "@/lib/email";
-import { sendMail } from "@/lib/mailer";
+import { sendEmail, shell } from "@/lib/email";
 import { SITE } from "@/lib/site";
 
 export async function POST(req: NextRequest) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { subject, body, audience } = await req.json();
   if (!subject || !body) return NextResponse.json({ error: "Subject and message are required." }, { status: 400 });
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD)
-    return NextResponse.json({ error: "GMAIL_USER or GMAIL_APP_PASSWORD missing" }, { status: 500 });
 
   const sb = supabaseAdmin();
   let raw: { email: string; token?: string }[] = [];
   if (audience === "contestants") {
     const { data } = await sb.from("hackathon_registrations").select("email");
-    raw = data ?? [];
+    raw = ((data ?? []) as any[]).map((r: any) => ({ email: r.email }));
   } else {
     const { data } = await sb.from("subscribers").select("email,token").is("unsubscribed_at", null);
-    raw = data ?? [];
+    raw = (data ?? []) as { email: string; token?: string }[];
   }
 
   const isBlockedDomain = (e: string) => /@(example\.com|test\.com|example\.org)$/i.test(e);
   const seen = new Set<string>();
-  const list = raw.filter((s) => {
+  const filtered = raw.filter((s) => {
     const e = s.email.toLowerCase();
     if (isBlockedDomain(e) || seen.has(e)) return false;
     seen.add(e);
     return true;
   });
-  const skipped = raw.length - list.length;
+  const skipped = raw.length - filtered.length;
+  const list = filtered;
 
   const esc = (s: string) => s.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]!));
   const html = (token?: string) =>
     shell(
       `<div style="white-space:pre-line">${esc(String(body))}</div>` +
         `<p style="font-size:12px;margin-top:20px"><a style="color:#F57F17" href="${SITE.url}">Visit the site</a>` +
-        (token ? ` · <a style="color:#F57F17" href="${SITE.url}/api/unsubscribe?token=${token}">Unsubscribe</a>` : "") +
+        (token ? ` \u00B7 <a style="color:#F57F17" href="${SITE.url}/api/unsubscribe?token=${token}">Unsubscribe</a>` : "") +
         `</p>`
     );
 
-  const results = await Promise.allSettled(list.map((s) => sendMail(s.email, String(subject), html(s.token))));
-  const sent = results.filter((r) => r.status === "fulfilled").length;
-  const failed = results.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
-  const lastError = failed ? String(failed.reason?.message ?? failed.reason) : null;
-  if (failed) console.error("[broadcast] nodemailer failed", lastError);
+  let sent = 0;
+  let lastError: string | null = null;
+  const CONCURRENCY = 5;
+  for (let i = 0; i < list.length; i += CONCURRENCY) {
+    const chunk = list.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(chunk.map((s) => sendEmail(s.email, String(subject), html(s.token))));
+    for (const r of results) {
+      if (r.ok) sent += 1;
+      else lastError = r.error ?? "send failed";
+    }
+  }
 
   await sb.from("broadcasts").insert({ subject: String(subject), body: String(body), sent_at: new Date().toISOString() });
-  if (sent === 0 && lastError)
-    return NextResponse.json({ ok: false, sent, total: list.length, skipped, error: lastError }, { status: 502 });
+  if (lastError && lastError.includes("example.com")) lastError += " \u2014 Resend test mode (EMAIL_FROM=onboarding@resend.dev) only delivers to your Resend account email. Remove test rows or verify a domain at resend.com/domains and set EMAIL_FROM to noreply@yourdomain.com.";
+  const skippedNote = skipped ? ` Skipped ${skipped} test/duplicate address(es).` : "";
+  if (sent === 0 && lastError) return NextResponse.json({ ok: false, sent, total: list.length, skipped, error: lastError + skippedNote }, { status: 502 });
+  if (skipped) lastError = (lastError ? lastError + skippedNote : skippedNote.trim());
   return NextResponse.json({ ok: true, sent, total: list.length, skipped, error: lastError });
 }

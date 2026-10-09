@@ -13,7 +13,12 @@
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #F57F17 #013216; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: #013216; }
+*::-webkit-scrollbar-thumb { background: #F57F17; border-radius: 999px; border: 2px solid #013216; }
+*::-webkit-scrollbar-thumb:hover { background: #ff9a2e; }
+*::-webkit-scrollbar-corner { background: #013216; }
 
 body {
   background: var(--color-bg);
