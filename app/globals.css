@@ -101,6 +101,17 @@ body::before {
 .schedule-pulse-2 { animation: schedule-pulse-2 1.05s ease-out 0.38s infinite; }
 .schedule-core { animation: schedule-core 1.05s ease-in-out infinite; }
 
+
+@keyframes sponsor-arrow-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.sponsor-arrow { animation: sponsor-arrow-bounce 1.1s ease-in-out infinite; }
+.sponsor-highlight { filter: drop-shadow(0 0 10px rgba(245,127,23,0.18)); }
+@media (prefers-reduced-motion: reduce) {
+  .sponsor-arrow { animation: none !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   .schedule-pulse, .schedule-pulse-2, .schedule-core { animation: none !important; }

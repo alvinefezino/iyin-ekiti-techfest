@@ -4,9 +4,11 @@ export type BlockType =
   | "hero" | "about" | "tracks" | "schedule" | "prizes" | "speakers" | "sponsors"
   | "faq" | "register" | "attendees" | "tickets" | "newsletter" | "text" | "image" | "cta" | "footer";
 
+export type SubFieldKind = "text" | "textarea" | "image" | "time" | "checkbox" | "select";
+export type SubField = { key: string; label: string; kind: SubFieldKind; placeholder?: string; options?: string[] };
 export type Field =
-  | { key: string; label: string; kind: "text" | "textarea" | "image" | "time" }
-  | { key: string; label: string; kind: "items"; fields: { key: string; label: string; kind: "text" | "textarea" | "image" | "time" }[] };
+  | { key: string; label: string; kind: "text" | "textarea" | "image" | "time" | "checkbox" | "select"; placeholder?: string; options?: string[] }
+  | { key: string; label: string; kind: "items"; fields: SubField[] };
 
 export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defaults: Record<string, any>; fields: Field[] }> = {
   hero: {
@@ -114,10 +116,10 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
   },
   sponsors: {
     label: "Sponsors",
-    defaults: { heading: "Sponsors", items: [{ name: "Sponsor", image: "" }, { name: "Sponsor", image: "" }] },
+    defaults: { heading: "Sponsors", items: [{ name: "Sponsor", image: "", badge: "", highlight: "" }, { name: "Sponsor", image: "", badge: "", highlight: "" }] },
     fields: [
       { key: "heading", label: "Heading", kind: "text" },
-      { key: "items", label: "Sponsors", kind: "items", fields: [{ key: "name", label: "Name", kind: "text" }, { key: "image", label: "Logo", kind: "image" }] },
+      { key: "items", label: "Sponsors", kind: "items", fields: [{ key: "name", label: "Name", kind: "text" }, { key: "image", label: "Logo", kind: "image" }, { key: "badge", label: "Badge (e.g. Food sponsor — shown when highlighted)", kind: "text", placeholder: "Food sponsor" } as SubField, { key: "highlight", label: "Highlight with animated arrow", kind: "checkbox" } as SubField] },
     ],
   },
   faq: {

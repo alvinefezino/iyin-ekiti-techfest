@@ -250,14 +250,30 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
         <div className="section" id={b.id}>
           <h2>{p.heading}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {items(b).map((s, i) => (
-              <Card key={i}>
-                  <div className="grid gap-2 place-items-center py-2">
-                {s.image ? <Img src={s.image} alt={s.name} className="h-14 object-contain" /> : null}
-                <div className="text-center text-sm font-medium">{s.name || "Sponsor"}</div>
-              </div>
-              </Card>
-            ))}
+            {items(b).map((s, i) => {
+              const highlighted = s.highlight === "1" || s.highlight === "true" || (s.highlight as any) === true;
+              return (
+                <div key={i} className={"relative " + (highlighted ? "sponsor-highlight" : "")}>
+                  {highlighted && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center pointer-events-none select-none" aria-hidden>
+                      <span className="whitespace-nowrap text-[10px] tracking-[0.14em] uppercase font-black px-2.5 py-1 rounded-full bg-[#F57F17] text-white shadow-[0_4px_16px_rgba(245,127,23,0.5)] border border-white/20">
+                        {s.badge?.trim() || "Featured"}
+                      </span>
+                      <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="sponsor-arrow -mt-px drop-shadow-[0_2px_6px_rgba(245,127,23,0.6)]" aria-hidden>
+                        <path d="M8 10L0 0h16L8 10z" fill="#F57F17" />
+                      </svg>
+                    </div>
+                  )}
+                  <Card>
+                    <div className={"grid gap-2 place-items-center py-2 transition-all " + (highlighted ? "pt-4 ring-1 ring-[#F57F17]/30 rounded-xl" : "")}>
+                      {s.image ? <Img src={s.image} alt={s.name} className="h-14 object-contain" /> : null}
+                      <div className="text-center text-sm font-medium">{s.name || "Sponsor"}</div>
+                      {highlighted && <span className="sponsor-arrow inline-flex items-center gap-1 text-[11px] text-[#F57F17] font-semibold">— <span className="w-6 h-px bg-[#F57F17] inline-block" /> →</span>}
+                    </div>
+                  </Card>
+                </div>
+              );
+            })}
           </div>
         </div>
       );

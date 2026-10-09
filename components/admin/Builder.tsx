@@ -1,15 +1,33 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { BLOCK_DEFS, DEFAULT_BLOCKS, newBlock, resolveSlugs, type Block, type BlockType, type Field } from "@/lib/blocks";
+import { BLOCK_DEFS, DEFAULT_BLOCKS, newBlock, resolveSlugs, type Block, type BlockType, type Field, type SubField } from "@/lib/blocks";
 import { SITE } from "@/lib/site";
 
-type Sub = { key: string; label: string; kind: "text" | "textarea" | "image" | "time" };
+type Sub = SubField;
 
 function Leaf({ f, value, onChange }: { f: Sub | Field; value: string; onChange: (v: string) => void }) {
   const [up, setUp] = useState(false);
   const [err, setErr] = useState("");
   if (f.kind === "time") return <input className="input" type="time" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />;
+  if ((f as any).kind === "checkbox") {
+    const checked = value === "1" || value === "true" || (value as any) === true;
+    return (
+      <label className="flex items-center gap-2 cursor-pointer select-none">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked ? "1" : "")} className="w-4 h-4 rounded accent-[#F57F17]" />
+        <span className="text-sm text-muted">{(f as any).label}</span>
+      </label>
+    );
+  }
+  if ((f as any).kind === "select") {
+    const opts: string[] = (f as any).options ?? [];
+    return (
+      <select className="input" value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
+        <option value="">—</option>
+        {opts.map((o) => <option key={o} value={o} className="text-black">{o}</option>)}
+      </select>
+    );
+  }
   if (f.kind === "textarea") return <textarea className="input" rows={3} value={value ?? ""} onChange={(e) => onChange(e.target.value)} />;
   if (f.kind === "image")
     return (
