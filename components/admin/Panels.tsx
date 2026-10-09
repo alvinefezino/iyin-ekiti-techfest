@@ -62,19 +62,28 @@ export function AudiencePanel() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [msg, setMsg] = useState("");
+  const [audience, setAudience] = useState<"subscribers" | "contestants">("subscribers");
+  const [contestants, setContestants] = useState(0);
+  useEffect(() => { sb().from("hackathon_registrations").select("email").then(({ data }) => setContestants(new Set((data ?? []).map((r: any) => String(r.email).toLowerCase())).size)); }, []);
   useEffect(() => { sb().from("subscribers").select("email,subscribed_at,unsubscribed_at").order("subscribed_at", { ascending: false }).then(({ data }) => setSubs((data as any) ?? [])); }, []);
   const active = subs.filter((s) => !s.unsubscribed_at);
   return (
     <div className="grid lg:grid-cols-2 gap-4">
       <div className="glass p-4 grid gap-3 content-start">
         <h2 className="font-semibold">Send a broadcast</h2>
-        <p className="text-sm text-muted">Goes to {active.length} active subscriber{active.length === 1 ? "" : "s"}.</p>
+        <div className="flex gap-1">
+          {(["subscribers", "contestants"] as const).map((a) => (
+            <button key={a} onClick={() => setAudience(a)} className={`px-3 py-1 rounded-full text-sm capitalize ${audience === a ? "bg-emerald" : "bg-white/10"}`}>{a}</button>
+          ))}
+        </div>
+        <p className="text-sm text-muted">Goes to {audience === "contestants" ? contestants : active.length} {audience === "contestants" ? "registered contestant" : "active subscriber"}{(audience === "contestants" ? contestants : active.length) === 1 ? "" : "s"}.</p>
         <input className="input" placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
         <textarea className="input" rows={8} placeholder="Message" value={body} onChange={(e) => setBody(e.target.value)} />
         <button className="btn-primary !py-1.5 text-sm w-fit" onClick={async () => {
-          if (!confirm(`Send to ${active.length} subscribers?`)) return;
+          const count = audience === "contestants" ? contestants : active.length;
+          if (!confirm(`Send to ${count} ${audience}?`)) return;
           setMsg("Sending…");
-          const res = await fetch("/api/admin/broadcast", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject, body }) });
+          const res = await fetch("/api/admin/broadcast", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject, body, audience }) });
           const j = await res.json().catch(() => ({} as any));
           if (!res.ok) setMsg(j.error ? `Failed: ${String(j.error).slice(0,300)}` : `Failed (${res.status})`);
           else if (j.sent === 0 && j.error) setMsg(`Failed: ${String(j.error).slice(0,300)}`);
