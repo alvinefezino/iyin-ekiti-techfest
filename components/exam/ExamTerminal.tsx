@@ -25,7 +25,7 @@ export default function ExamTerminal({ token, preview }: { token: string; previe
   const [submitted, setSubmitted] = useState<{ score: number; total: number } | null>(null);
   const [violation, setViolation] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(20 * 60); // 20 min for 50 Q
+  const [timeLeft, setTimeLeft] = useState(45 * 60); // 45 min for 50 Q
   const violationRef = useRef(false);
   const submittedRef = useRef(false);
   const answersRef = useRef<Record<number, number>>({});
