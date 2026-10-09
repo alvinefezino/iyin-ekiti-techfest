@@ -403,7 +403,7 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
       return (
         <div className="section" id={b.id}>
           <h2>{p.heading}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-14 md:gap-4 pt-7 md:pt-0">
             {items(b).map((s, i) => (
               <SponsorPromoCard key={i} s={s} />
             ))}
