@@ -24,6 +24,6 @@ export async function POST(req: NextRequest) {
     team_members: d.members.split("\n").map((s) => s.trim()).filter(Boolean),
   });
   if (error) return NextResponse.json({ error: "Couldn't register. Try again." }, { status: 500 });
-  await sendEmail(d.email, `You're registered for the ${SITE.name} hackathon`, shell(`<p>Hi ${d.full_name.replace(/[<>]/g, "")}, your hackathon registration is confirmed. We'll send next steps soon.</p>`));
+  await sendEmail(d.email, `You are registered for the Iyin Ekiti TechFest hackathon`, shell(`<p>Hi ${d.full_name.replace(/[<>]/g, "")}, your hackathon registration is confirmed. We'll send next steps soon.</p>`));
   return NextResponse.json({ ok: true });
 }

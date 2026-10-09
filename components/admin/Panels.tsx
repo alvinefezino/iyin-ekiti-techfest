@@ -196,42 +196,129 @@ export function AttendeesPanel() {
 export function ExamPanel() {
   const [rows, setRows] = useState<any[]>([]);
   const [qRows, setQRows] = useState<any[]>([]);
+  const [regs, setRegs] = useState<Record<string,string>>({});
   const [msg, setMsg] = useState("");
+  const [detail, setDetail] = useState<any | null>(null);
   const [newQ, setNewQ] = useState({ question: "", options: ["","","",""], answer: 0 });
   const load = () => {
     sb().from("exam_invites").select("*").order("created_at", { ascending: false }).then(({ data }) => setRows(data ?? []));
     sb().from("exam_questions").select("*").order("id").then(({ data }) => setQRows(data ?? []));
+    sb().from("hackathon_registrations").select("email,full_name").then(({ data }) => {
+      const m: Record<string,string> = {};
+      (data ?? []).forEach((r:any)=> { m[String(r.email).toLowerCase()] = String(r.full_name||""); });
+      setRegs(m);
+    });
   };
   useEffect(() => { load(); }, []);
+  const nameFor = (email:string) => regs[String(email).toLowerCase()] || "";
   const csv = () => {
-    const head = ["email","status","score","disqualified_reason","created_at","submitted_at"];
+    const head = ["name","email","status","score","disqualified_reason","created_at","submitted_at"];
     const esc = (v: any) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
-    const out = [head.join(","), ...rows.map((r) => head.map((h) => esc(r[h])).join(","))].join("\n");
-    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([out], { type: "text/csv" })); a.download = "exam_invites.csv"; a.click();
+    const out = [head.join(","), ...rows.map((r) => {
+      const name = nameFor(r.email);
+      return head.map((h) => h==="name" ? esc(name) : esc(r[h])).join(",");
+    })].join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([out], { type: "text/csv" })); a.download = "exam_results.csv"; a.click();
   };
+  const qMap = new Map<number, any>();
+  qRows.forEach((qq:any)=> qMap.set(Number(qq.id), qq));
+  // fallback to placeholder list when DB empty cannot import server file here so build minimal map from qRows only
+  // if DB empty detail view will show question numbers only
+
+  const renderDetail = () => {
+    if (!detail) return null;
+    const answers: Record<string,number> = detail.answers ?? {};
+    const entries = Object.entries(answers).sort((a,b)=> Number(a[0])-Number(b[0]));
+    const score = detail.score ?? 0;
+    const total = qRows.length || 50;
+    const passed = score >= 20;
+    return (
+      <div className="fixed inset-0 z-[80] grid place-items-center p-4">
+        <div className="absolute inset-0 bg-black/60" onClick={()=> setDetail(null)} />
+        <div className="relative glass max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col rounded-2xl">
+          <div className="p-4 border-b border-white/10 flex justify-between items-start gap-3">
+            <div>
+              <div className="font-semibold text-sm">{nameFor(detail.email) ? nameFor(detail.email) + " " : ""}<span className="text-muted font-normal">{detail.email}</span></div>
+              <div className="flex gap-2 items-center mt-1">
+                <span className={`px-2 py-0.5 rounded-full text-xs ${detail.status==="submitted"?"bg-[#F57F17] text-black": detail.status==="disqualified"?"bg-red-500 text-white": detail.status==="started"?"bg-white/20":"bg-[#013216] border border-white/20"}`}>{detail.status}</span>
+                <span className="text-sm font-bold">{score} of {total}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${passed?"bg-emerald text-black":"bg-red-500/20 text-red-300 border border-red-500/30"}`}>{passed ? "Passed" : "Below threshold"}</span>
+              </div>
+              {detail.disqualified_reason && <div className="text-xs text-red-300 mt-1">Reason {detail.disqualified_reason}</div>}
+            </div>
+            <button className="btn-ghost !py-1 text-sm" onClick={()=> setDetail(null)}>Close</button>
+          </div>
+          <div className="overflow-y-auto p-4 grid gap-3">
+            {!entries.length && <div className="text-sm text-muted">No answers recorded for this invite yet. Invite not started or not submitted.</div>}
+            {entries.map(([qid, chosen])=>{
+              const id = Number(qid);
+              const qq = qMap.get(id);
+              const qtext = qq?.question ?? `Question ${id}`;
+              const opts: string[] = qq?.options ?? [];
+              const correct = qq?.answer;
+              const isCorrect = correct !== undefined && Number(chosen) === Number(correct);
+              return (
+                <div key={qid} className={`rounded-xl border p-3 ${isCorrect?"border-emerald/30 bg-emerald/10":"border-white/10 bg-white/5"}`}>
+                  <div className="text-xs font-medium"><span className="text-[#F57F17]">{id}.</span> {qtext}</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-2">
+                    {opts.length ? opts.map((o:string,i:number)=> {
+                      const isChosen = Number(chosen)===i;
+                      const isAnswer = Number(correct)===i;
+                      return (
+                        <div key={i} className={`text-xs px-2 py-1.5 rounded-lg border ${isChosen && isAnswer ? "bg-emerald text-black border-emerald font-medium" : isChosen && !isAnswer ? "bg-red-500 text-white border-red-500" : isAnswer ? "bg-[#F57F17]/20 border-[#F57F17]/40 text-white" : "bg-black/20 border-white/10 text-muted"}`}>
+                          {String.fromCharCode(65+i)}. {o} {isChosen ? "  your choice" : ""}{isAnswer ? "  correct" : ""}
+                        </div>
+                      );
+                    }) : (
+                      <div className="text-xs text-muted">Chosen option {String.fromCharCode(65+Number(chosen))}  index {String(chosen)}</div>
+                    )}
+                  </div>
+                  <div className="text-[11px] mt-1.5 flex gap-2">
+                    <span className={isCorrect?"text-emerald":"text-red-300"}>{isCorrect ? "Correct" : "Not correct"}</span>
+                    <span className="text-muted">Chosen {opts[Number(chosen)] ?? String.fromCharCode(65+Number(chosen))}  Correct {opts[Number(correct)] ?? (correct!==undefined? String.fromCharCode(65+Number(correct)):"unknown")}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="grid gap-4">
       <div className="glass p-4">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="font-semibold">Exam Terminal — invites ({rows.length})</h2>
+        <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
+          <div>
+            <h2 className="font-semibold">Exam Results {rows.length ? ` ${rows.length} invites` : ""}</h2>
+            <p className="text-xs text-muted">Scores and chosen options. Below 20 is auto disqualified and gets a mail. Invite mail uses the persons real name.</p>
+          </div>
           <div className="flex gap-2">
             <button className="btn-ghost !py-1 text-sm" onClick={load}>Refresh</button>
             <button className="btn-ghost !py-1 text-sm" onClick={csv}>Download CSV</button>
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[40rem]">
-            <thead><tr className="text-left text-muted"><th className="py-1">Email</th><th>Status</th><th>Score</th><th>Reason</th><th>Created</th></tr></thead>
+          <table className="w-full text-sm min-w-[52rem]">
+            <thead><tr className="text-left text-muted"><th className="py-1">Name</th><th>Email</th><th>Status</th><th>Score</th><th>Chosen Options</th><th>Reason</th><th>Submitted</th><th></th></tr></thead>
             <tbody>
-              {rows.map((r) => (
+              {rows.map((r) => {
+                const ans: Record<string,number> | null = r.answers;
+                const preview = ans ? Object.entries(ans).slice(0,4).map(([k,v])=> `${k}:${String.fromCharCode(65+Number(v))}`).join(" ") + (Object.keys(ans).length>4 ? " ..." : "") : "";
+                return (
                 <tr key={r.id} className="border-t border-white/10">
+                  <td className="py-1 text-xs font-medium">{nameFor(r.email) || <span className="text-muted">no name yet</span>}</td>
                   <td className="py-1 text-xs break-all">{r.email}</td>
-                  <td><span className={`px-2 py-0.5 rounded-full text-xs ${r.status==="submitted"?"bg-[#F57F17] text-black": r.status==="disqualified"?"bg-white text-black": r.status==="started"?"bg-white/20":"bg-[#013216] border border-white/20"}`}>{r.status}</span></td>
-                  <td>{r.score ?? "-"}</td>
-                  <td className="text-xs">{r.disqualified_reason ?? "-"}</td>
-                  <td className="text-xs text-muted">{new Date(r.created_at).toLocaleDateString()}</td>
+                  <td><span className={`px-2 py-0.5 rounded-full text-xs ${r.status==="submitted"?"bg-[#F57F17] text-black": r.status==="disqualified"?"bg-red-500 text-white": r.status==="started"?"bg-white/20":"bg-[#013216] border border-white/20"}`}>{r.status}</span></td>
+                  <td><span className={`font-bold ${r.score!=null && r.score<20 ? "text-red-300" : ""}`}>{r.score ?? "not yet"}</span><span className="text-xs text-muted">{r.score!=null ? " of 50" : ""}</span></td>
+                  <td className="text-xs font-mono max-w-[16rem] truncate" title={preview}>{preview || "not submitted"}</td>
+                  <td className="text-xs max-w-[10rem] truncate" title={r.disqualified_reason||""}>{r.disqualified_reason ?? "ok"}</td>
+                  <td className="text-xs text-muted">{r.submitted_at ? new Date(r.submitted_at).toLocaleString() : "not yet"}</td>
+                  <td><button className="px-3 py-1 rounded-full bg-white text-black text-xs disabled:opacity-40" disabled={!r.answers} onClick={()=> setDetail(r)}>View</button></td>
                 </tr>
-              ))}
+              )})}
+              {!rows.length && <tr><td colSpan={8} className="py-8 text-center text-muted text-sm">No invites yet. Send invites from Registrations.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -239,8 +326,8 @@ export function ExamPanel() {
       </div>
 
       <div className="glass p-4">
-        <h3 className="font-semibold text-sm mb-2">Questions ({qRows.length ? `${qRows.length} / 50` : "50 placeholder (file)"})</h3>
-        <p className="text-xs text-muted mb-3">{qRows.length ? "DB questions — exam will use these (shuffled per invite)." : "No DB questions yet — exam is using 50 placeholder questions from lib/examQuestions.ts (shuffled per invite). Add below or import real ones; when DB has 50, those take over."}</p>
+        <h3 className="font-semibold text-sm mb-2">Questions {qRows.length ? `${qRows.length} of 50` : "50 placeholder set active"}</h3>
+        <p className="text-xs text-muted mb-3">{qRows.length ? "Database questions exam uses these shuffled per invite." : "No database questions yet exam uses 50 placeholder questions from code shuffled per invite. Add real questions below when you have 50 database rows they take over."}</p>
         <div className="max-h-[20rem] overflow-y-auto divide-y divide-white/10 border border-white/10 rounded-xl">
           {qRows.map((qq: any) => (
             <div key={qq.id} className="p-2 text-xs">
@@ -248,17 +335,17 @@ export function ExamPanel() {
               <div className="text-muted ml-4">{(qq.options ?? []).map((o: string, i: number) => <span key={i} className={qq.answer===i ? "text-white font-medium" : ""}>{String.fromCharCode(65+i)}. {o} </span>)}</div>
             </div>
           ))}
-          {qRows.length===0 && <div className="p-3 text-xs text-muted">Showing 50 dummy questions from the placeholder file. Open any invite&apos;s <span className="text-white">Preview link</span> (<code className="text-white">?preview=1</code>) to see them, or add real questions below.</div>}
+          {qRows.length===0 && <div className="p-3 text-xs text-muted">Showing 50 dummy questions from the placeholder set. Preview any invite link with ?preview equals 1 to see them or add real questions below.</div>}
         </div>
         <div className="grid gap-2 mt-3">
           <input className="input text-sm" placeholder="Question text" value={newQ.question} onChange={(e) => setNewQ({ ...newQ, question: e.target.value })} />
           <div className="grid grid-cols-2 gap-2">
             {[0,1,2,3].map((i) => (
-              <input key={i} className="input text-sm" placeholder={`Option ${String.fromCharCode(65+i)}${newQ.answer===i ? " (correct)" : ""}`} value={newQ.options[i]} onChange={(e) => { const o=[...newQ.options]; o[i]=e.target.value; setNewQ({ ...newQ, options: o }); }} />
+              <input key={i} className="input text-sm" placeholder={`Option ${String.fromCharCode(65+i)}${newQ.answer===i ? " correct" : ""}`} value={newQ.options[i]} onChange={(e) => { const o=[...newQ.options]; o[i]=e.target.value; setNewQ({ ...newQ, options: o }); }} />
             ))}
           </div>
           <div className="flex gap-2 items-center">
-            <span className="text-xs text-muted">Correct:</span>
+            <span className="text-xs text-muted">Correct</span>
             <select className="input !w-auto text-sm" value={newQ.answer} onChange={(e) => setNewQ({ ...newQ, answer: Number(e.target.value) })}>
               <option value={0}>A</option><option value={1}>B</option><option value={2}>C</option><option value={3}>D</option>
             </select>
@@ -271,6 +358,7 @@ export function ExamPanel() {
           </div>
         </div>
       </div>
+      {detail && renderDetail()}
     </div>
   );
 }
@@ -311,7 +399,7 @@ export function CheckinPanel() {
 
   return (
     <div className="glass p-4 max-w-md grid gap-3">
-      <h2 className="font-semibold">Ticket check-in</h2>
+      <h2 className="font-semibold">Ticket check in</h2>
       <div className="flex gap-2">
         <input className="input" placeholder="Ticket code" value={code} onChange={(e) => setCode(e.target.value)} />
         <button className="btn-primary shrink-0 !py-1.5 text-sm" onClick={() => check(code)}>Check</button>

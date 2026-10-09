@@ -1,8 +1,8 @@
 export const SITE = {
-  name: "Iyin-Ekiti TechFest",
-  fullName: "Iyin-Ekiti TechFest powered by FIESU and FUTES Gotham Mafians",
+  name: "Iyin Ekiti TechFest",
+  fullName: "Iyin Ekiti TechFest powered by FIESU and FUTES Gotham Mafians",
   theme: "Thinking Beyond Borders",
-  tagline: "FUTES Iyin-Ekiti TechFest: Thinking Beyond Borders, Powered by FIESU",
+  tagline: "FUTES Iyin Ekiti TechFest: Thinking Beyond Borders, Powered by FIESU",
   eventDate: "2026-11-07T09:00:00+01:00",
   logo: "/logo-white.jpg",
   logoWhite: "/logo-white.jpg",

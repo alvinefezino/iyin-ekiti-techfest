@@ -26,7 +26,7 @@ export async function fulfillOrder(reference: string) {
   await sb.from("tickets").insert(codes.map((code) => ({ order_id: order.id, code })));
 
   const qrs = codes.map((c) => `<div style="margin:16px 0;text-align:center"><img src="${SITE.url}/api/qr/${c}" width="180" height="180" alt="QR ${c}" style="background:#fff;padding:8px;border-radius:12px"/><div style="font-family:monospace;margin-top:6px">${c}</div></div>`).join("");
-  await sendEmail(order.email, `Your ${SITE.name} ticket${codes.length > 1 ? "s" : ""}`, shell(`
+  await sendEmail(order.email, `Your Iyin Ekiti TechFest ticket${codes.length > 1 ? "s" : ""}`, shell(`
     <p>Hi ${String(order.full_name).replace(/[<>]/g, "")}, your payment of ₦${(order.amount_kobo / 100).toLocaleString()} was received.</p>
     <p>Show the QR code at the entrance:</p>${qrs}
     <p style="font-size:12px;color:#8fb5a5">Reference: ${reference}</p>`));
