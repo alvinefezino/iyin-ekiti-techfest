@@ -144,8 +144,9 @@ create policy "admin_attendees" on event_attendees for select using (is_admin())
 create policy "admin_orders" on orders for select using (is_admin());
 create policy "admin_tickets" on tickets for select using (is_admin());
 create policy "admin_exam_invites" on exam_invites for all using (is_admin()) with check (is_admin());
-create policy "exam_public_read" on exam_questions for select using (true);
-create policy "exam_invite_public_read" on exam_invites for select using (true);
+-- Exam tables are admin-only. Candidates must never read them directly (answers and tokens would leak).
+-- Serve questions without the answer column and grade submissions in server routes using the service role.
+create policy "admin_exam_questions" on exam_questions for all using (is_admin()) with check (is_admin());
 create policy "admin_self" on admins for select using (user_id = auth.uid());
 
 -- Public image bucket for admin uploads
