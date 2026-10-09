@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Loader from "@/components/Loader";
 import Chatbot from "@/components/Chatbot";
 import CookieBanner from "@/components/CookieBanner";
+import BackToTop from "@/components/BackToTop";
 
 export default function HomeView({
   blocks, eventDate, cookieText, preview = false, focus,
@@ -27,6 +28,7 @@ export default function HomeView({
       </main>
       {!preview && <Chatbot />}
       {!preview && <CookieBanner text={cookieText || "We use cookies to improve your experience."} />}
+      <BackToTop />
     </CountdownProvider>
   );
 }

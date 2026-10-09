@@ -26,12 +26,12 @@ export default function HeroBlock({
   return (
     <section ref={ref} id="hero" className="relative" style={{ height: "260vh" }}>
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <div className="absolute inset-0 translate-y-[14vh] md:translate-y-0">
+        <div className="absolute inset-0 translate-y-[16vh] md:translate-y-0">
           <Hero3D remaining={remaining} progress={scrollYProgress} />
         </div>
         <motion.div
           style={{ opacity: textOpacity, y: textY }}
-          className="relative z-10 pt-12 md:pt-24 px-5 text-center pointer-events-none"
+          className="relative z-10 pt-20 md:pt-28 px-5 md:px-8 text-center pointer-events-none"
         >
           <p className="text-teal text-sm md:text-base">{props.eyebrow}</p>
           <h1 className="text-4xl md:text-7xl font-semibold mt-2 leading-tight">{props.title}</h1>
