@@ -5,8 +5,8 @@ export type BlockType =
   | "faq" | "register" | "attendees" | "tickets" | "newsletter" | "text" | "image" | "cta" | "footer";
 
 export type Field =
-  | { key: string; label: string; kind: "text" | "textarea" | "image" }
-  | { key: string; label: string; kind: "items"; fields: { key: string; label: string; kind: "text" | "textarea" | "image" }[] };
+  | { key: string; label: string; kind: "text" | "textarea" | "image" | "time" }
+  | { key: string; label: string; kind: "items"; fields: { key: string; label: string; kind: "text" | "textarea" | "image" | "time" }[] };
 
 export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defaults: Record<string, any>; fields: Field[] }> = {
   hero: {
@@ -64,14 +64,22 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     defaults: {
       heading: "Schedule",
       items: [
-        { time: "9:00 AM", title: "Opening ceremony", body: "Lorem ipsum dolor sit amet." },
-        { time: "10:00 AM", title: "Hacking begins", body: "Consectetur adipiscing elit." },
-        { time: "4:00 PM", title: "Final pitches and awards", body: "Sed do eiusmod tempor." },
+        { start: "09:00", end: "10:00", title: "Opening ceremony", liveText: "Pelumi is on air", body: "Lorem ipsum dolor sit amet." },
+        { start: "10:00", end: "16:00", title: "Hacking begins", liveText: "The hackers are active, and bombing", body: "Consectetur adipiscing elit." },
+        { start: "16:00", end: "17:00", title: "Award giving", liveText: "There's a reward for every sleepless night", body: "Sed do eiusmod tempor." },
       ],
     },
     fields: [
       { key: "heading", label: "Heading", kind: "text" },
-      { key: "items", label: "Sessions", kind: "items", fields: [{ key: "time", label: "Time", kind: "text" }, { key: "title", label: "Title", kind: "text" }, { key: "body", label: "Description", kind: "textarea" }, { key: "image", label: "Photo (optional)", kind: "image" }] },
+      { key: "items", label: "Sessions", kind: "items", fields: [
+        { key: "title", label: "Session title", kind: "text" },
+        { key: "start", label: "Starts at (WAT, 24h)", kind: "time" },
+        { key: "end", label: "Ends at (WAT, 24h)", kind: "time" },
+        { key: "liveText", label: "Message shown while it is live", kind: "text" },
+        { key: "body", label: "Description", kind: "textarea" },
+        { key: "time", label: "Time label (optional, auto-filled from start and end)", kind: "text" },
+        { key: "image", label: "Photo (optional)", kind: "image" },
+      ] },
     ],
   },
   prizes: {

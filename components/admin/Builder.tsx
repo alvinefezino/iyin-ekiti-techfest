@@ -4,11 +4,12 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { BLOCK_DEFS, DEFAULT_BLOCKS, newBlock, type Block, type BlockType, type Field } from "@/lib/blocks";
 import { SITE } from "@/lib/site";
 
-type Sub = { key: string; label: string; kind: "text" | "textarea" | "image" };
+type Sub = { key: string; label: string; kind: "text" | "textarea" | "image" | "time" };
 
 function Leaf({ f, value, onChange }: { f: Sub | Field; value: string; onChange: (v: string) => void }) {
   const [up, setUp] = useState(false);
   const [err, setErr] = useState("");
+  if (f.kind === "time") return <input className="input" type="time" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />;
   if (f.kind === "textarea") return <textarea className="input" rows={3} value={value ?? ""} onChange={(e) => onChange(e.target.value)} />;
   if (f.kind === "image")
     return (

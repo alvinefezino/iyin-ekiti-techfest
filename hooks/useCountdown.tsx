@@ -14,6 +14,7 @@ const calc = (target: number): Remaining => {
   };
 };
 
+const DateCtx = createContext<string>("");
 const Ctx = createContext<Remaining>({ days: 0, hours: 0, minutes: 0, seconds: 0, done: false });
 
 export function CountdownProvider({ date, children }: { date: string; children: React.ReactNode }) {
@@ -24,8 +25,13 @@ export function CountdownProvider({ date, children }: { date: string; children: 
     const t = setInterval(() => setR(calc(target)), 1000);
     return () => clearInterval(t);
   }, [target]);
-  return <Ctx.Provider value={r}>{children}</Ctx.Provider>;
+  return (
+    <DateCtx.Provider value={date}>
+      <Ctx.Provider value={r}>{children}</Ctx.Provider>
+    </DateCtx.Provider>
+  );
 }
 
 export const useCountdown = () => useContext(Ctx);
+export const useEventDate = () => useContext(DateCtx);
 export const pad = (n: number) => String(n).padStart(2, "0");
