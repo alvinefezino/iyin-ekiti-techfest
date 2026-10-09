@@ -6,8 +6,7 @@ const FROM =
   process.env.EMAIL_FROM ||
   (process.env.GMAIL_USER ? `Iyin-Ekiti TechFest <${process.env.GMAIL_USER}>` : "Iyin-Ekiti TechFest <noreply@iyinekititechfest.com>");
 
-const SENDBYTE_API_KEY = process.env.SENDBYTE_API_KEY?.trim() || "";
-const SENDBYTE_URL = "https://api.sendbyte.africa/v1/emails";
+const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim() || "";
 
 let _transporter: Transporter | null = null;
 
@@ -44,43 +43,29 @@ function getTransporter(): Transporter | null {
   return null;
 }
 
-async function sendViaSendByte(
+async function sendViaResend(
   to: string,
   subject: string,
   html: string,
-  opts?: { text?: string; idempotencyKey?: string }
 ): Promise<{ ok: boolean; error: string | null }> {
-  if (!SENDBYTE_API_KEY) return { ok: false, error: "SENDBYTE_API_KEY not set" };
-  const body: Record<string, unknown> = {
-    from: FROM,
-    to: [to],
-    subject,
-    html,
-    tags: ["iyintech"],
-  };
-  if (opts?.text) body.text = opts.text;
-  if (opts?.idempotencyKey) body.idempotency_key = opts.idempotencyKey;
+  if (!RESEND_API_KEY) return { ok: false, error: "RESEND_API_KEY not set" };
   try {
-    const r = await fetch(SENDBYTE_URL, {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${SENDBYTE_API_KEY}`,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ from: FROM, to, subject, html }),
     });
-    const j = await r.json().catch(() => ({}));
-    if (r.status === 201 || r.status === 200) return { ok: true, error: null };
-    const msg =
-      (j as any)?.message ||
-      (j as any)?.error ||
-      ((j as any)?.errors ? JSON.stringify((j as any).errors) : "") ||
-      `SendByte ${r.status}`;
-    // Surface domain verification hint
-    if (String(msg).toLowerCase().includes("domain_not_verified") || r.status === 403) {
-      return { ok: false, error: `${msg} — verify iyinekititechfest.com in SendByte dashboard (3 DNS records) and use sk_live_ key, or set sk_test_ for sandbox.` };
+    if (res.ok) return { ok: true, error: null };
+    const text = await res.text().catch(() => "");
+    let msg = text;
+    try { const j = JSON.parse(text); msg = (j as any).message || (j as any).error || text; } catch {}
+    if (/domain.*not.*verified|403/i.test(msg)) {
+      return { ok: false, error: `${msg} — verify iyinekititechfest.com in Resend (DNS) and use a verified FROM like noreply@iyinekititechfest.com.` };
     }
-    return { ok: false, error: String(msg) };
+    return { ok: false, error: String(msg || `Resend ${res.status}`) };
   } catch (e: unknown) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
@@ -90,20 +75,19 @@ export async function sendEmail(
   to: string | string[],
   subject: string,
   html: string,
-  opts?: { text?: string; idempotencyKey?: string }
+  _opts?: { text?: string; idempotencyKey?: string },
 ) {
   const list = Array.isArray(to) ? to : [to];
 
-  // Primary: SendByte REST if key present
-  if (SENDBYTE_API_KEY) {
+  // Primary: Resend if key present
+  if (RESEND_API_KEY) {
     let lastError: string | null = null;
     for (const rcpt of list) {
-      const r = await sendViaSendByte(rcpt, subject, html, opts);
+      const r = await sendViaResend(rcpt, subject, html);
       if (r.ok) continue;
-      // Fallback to SMTP/Gmail if SendByte rejects (e.g. domain not verified, key issue) and transporter is available
+      // Fallback to SMTP/Gmail for transient or domain issues when transporter is configured
       const t = getTransporter();
-      const shouldFallback =
-        /domain_not_verified|401|535|invalid.*key/i.test(String(r.error)) && t;
+      const shouldFallback = t && /domain_not_verified|451|429|rate_limit|temporary|535/i.test(String(r.error));
       if (shouldFallback && t) {
         try {
           await t.sendMail({ from: FROM, to: rcpt, subject, html });
@@ -114,15 +98,6 @@ export async function sendEmail(
         }
       }
       lastError = r.error;
-      // do not fallback for other errors — surface SendByte error
-      // but if SMTP is configured, try it once as safety net for 5xx/451
-      if (t && /451|429|rate_limit|temporary/i.test(String(r.error))) {
-        try {
-          await t.sendMail({ from: FROM, to: rcpt, subject, html });
-          lastError = null;
-          continue;
-        } catch {}
-      }
     }
     if (lastError) return { ok: false as const, error: lastError };
     return { ok: true as const, error: null };
@@ -134,7 +109,7 @@ export async function sendEmail(
     return {
       ok: false as const,
       error:
-        "No mail transporter configured. Set SENDBYTE_API_KEY (recommended, domain iyinekititechfest.com) or SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS or GMAIL_USER+GMAIL_APP_PASSWORD, and EMAIL_FROM=noreply@iyinekititechfest.com.",
+        "No mail transporter configured. Set RESEND_API_KEY (recommended, domain iyinekititechfest.com) or SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS or GMAIL_USER+GMAIL_APP_PASSWORD, and EMAIL_FROM=noreply@iyinekititechfest.com.",
     };
   }
   try {
