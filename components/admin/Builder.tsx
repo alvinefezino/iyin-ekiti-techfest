@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { BLOCK_DEFS, DEFAULT_BLOCKS, newBlock, type Block, type BlockType, type Field } from "@/lib/blocks";
+import { BLOCK_DEFS, DEFAULT_BLOCKS, newBlock, resolveSlugs, type Block, type BlockType, type Field } from "@/lib/blocks";
 import { SITE } from "@/lib/site";
 
 type Sub = { key: string; label: string; kind: "text" | "textarea" | "image" | "time" };
@@ -50,11 +50,25 @@ function Leaf({ f, value, onChange }: { f: Sub | Field; value: string; onChange:
   return <input className="input" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />;
 }
 
-function BlockEditor({ b, onChange }: { b: Block; onChange: (p: Record<string, any>) => void }) {
+function BlockEditor({ b, autoSlug, onChange, onMeta }: { b: Block; autoSlug: string; onChange: (p: Record<string, any>) => void; onMeta: (patch: Partial<Block>) => void }) {
   const def = BLOCK_DEFS[b.type];
   const set = (k: string, v: any) => onChange({ ...b.props, [k]: v });
   return (
     <div className="grid gap-3 pt-3">
+      <div className="bg-white/5 rounded-xl p-3 grid gap-2 border border-white/10">
+        <div>
+          <div className="text-xs text-muted mb-1">Section name (admin list, navbar and link)</div>
+          <input className="input" placeholder={def.label} value={b.name ?? ""} onChange={(e) => onMeta({ name: e.target.value })} />
+        </div>
+        <div>
+          <div className="text-xs text-muted mb-1">Link (URL) · live at <span className="font-mono text-teal">/{autoSlug}</span></div>
+          <input className="input font-mono text-sm" placeholder="auto from the name" value={b.slug ?? ""} onChange={(e) => onMeta({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-") })} />
+        </div>
+        <label className="text-xs text-muted flex items-center gap-2">
+          <input type="checkbox" checked={b.showInNav ?? !!def.nav} onChange={(e) => onMeta({ showInNav: e.target.checked })} />
+          Show in the navbar
+        </label>
+      </div>
       {def.fields.map((f) => (
         <div key={f.key}>
           <div className="text-xs text-muted mb-1">{f.label}</div>
@@ -134,6 +148,13 @@ export default function Builder() {
   useEffect(() => { if (ready.current) push(); }, [push]);
 
   const update = (i: number, props: Record<string, any>) => setBlocks((bs) => bs.map((b, j) => (j === i ? { ...b, props } : b)));
+  const updateMeta = (i: number, patch: Partial<Block>) => setBlocks((bs) => bs.map((b, j) => (j === i ? { ...b, ...patch } : b)));
+  const duplicate = (i: number) => {
+    const src = blocks[i];
+    const copy: Block = { ...JSON.parse(JSON.stringify(src)), id: `${src.type}-${Math.random().toString(36).slice(2, 8)}`, slug: "", name: src.name ? `${src.name} copy` : "" };
+    setBlocks((bs) => { const a = [...bs]; a.splice(i + 1, 0, copy); return a; });
+    setOpen(copy.id);
+  };
   const move = (i: number, d: number) => setBlocks((bs) => { const a = [...bs]; const j = i + d; if (j < 0 || j >= a.length) return a; [a[i], a[j]] = [a[j], a[i]]; return a; });
 
   async function saveDraft() {
@@ -162,6 +183,7 @@ export default function Builder() {
   }
 
   if (!loaded) return <p className="text-muted p-4">Loading…</p>;
+  const slugs = resolveSlugs(blocks);
   const width = device === "phone" ? 390 : device === "tablet" ? 768 : undefined;
 
   return (
@@ -185,13 +207,17 @@ export default function Builder() {
           {blocks.map((b, i) => (
             <div key={b.id} className="glass p-3">
               <div className="flex items-center gap-2">
-                <button className="flex-1 text-left font-medium" onClick={() => setOpen(open === b.id ? null : b.id)}>{BLOCK_DEFS[b.type].label}</button>
+                <button className="flex-1 text-left font-medium min-w-0" onClick={() => setOpen(open === b.id ? null : b.id)}>
+                  <span className="block truncate">{b.name || b.props.heading || BLOCK_DEFS[b.type].label}</span>
+                  <span className="block text-[11px] font-normal text-muted truncate">{BLOCK_DEFS[b.type].label} · /{slugs[b.id]}</span>
+                </button>
                 <button className={`!px-3 !py-0.5 text-xs ${open === b.id ? "btn-primary" : "btn-ghost"}`} onClick={() => setOpen(open === b.id ? null : b.id)}>{open === b.id ? "Close" : "Edit"}</button>
+                <button className="btn-ghost !px-2 !py-0.5 text-xs" onClick={() => duplicate(i)}>Copy</button>
                 <button className="btn-ghost !px-2 !py-0.5 text-xs" onClick={() => move(i, -1)}>Up</button>
                 <button className="btn-ghost !px-2 !py-0.5 text-xs" onClick={() => move(i, 1)}>Down</button>
                 <button className="btn-ghost !px-2 !py-0.5 text-xs text-countdown" onClick={() => { if (confirm("Remove this section?")) setBlocks(blocks.filter((_, j) => j !== i)); }}>Remove</button>
               </div>
-              {open === b.id && <BlockEditor b={b} onChange={(p) => update(i, p)} />}
+              {open === b.id && <BlockEditor b={b} autoSlug={slugs[b.id]} onChange={(p) => update(i, p)} onMeta={(patch) => updateMeta(i, patch)} />}
             </div>
           ))}
           <div className="glass p-3 flex gap-2">

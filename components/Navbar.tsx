@@ -2,14 +2,21 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SITE } from "@/lib/site";
-import { BLOCK_DEFS, type Block } from "@/lib/blocks";
+import { inNav, navLabel, resolveSlugs, type Block } from "@/lib/blocks";
 import { pad, useCountdown } from "@/hooks/useCountdown";
 import Backdrop from "@/components/Backdrop";
 
-export default function Navbar({ blocks, heroVisible }: { blocks: Block[]; heroVisible: boolean }) {
+export default function Navbar({ blocks, heroVisible, preview = false }: { blocks: Block[]; heroVisible: boolean; preview?: boolean }) {
   const c = useCountdown();
   const [open, setOpen] = useState(false);
-  const links = blocks.filter((b) => BLOCK_DEFS[b.type]?.nav && b.props.heading).slice(0, 6);
+  const slugs = resolveSlugs(blocks);
+  const links = blocks.filter(inNav).slice(0, 6).map((b) => ({ id: b.id, slug: slugs[b.id], label: navLabel(b) }));
+  const go = (e: React.MouseEvent, slug: string) => {
+    e.preventDefault();
+    document.getElementById(slug)?.scrollIntoView({ behavior: "smooth" });
+    if (!preview) history.pushState(null, "", `/${slug}`);
+    setOpen(false);
+  };
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 p-3">
@@ -39,8 +46,8 @@ export default function Navbar({ blocks, heroVisible }: { blocks: Block[]; heroV
 
         <div className="hidden md:flex items-center gap-5 text-sm">
           {links.map((b) => (
-            <a key={b.id} href={`#${b.id}`} className="text-muted hover:text-ink transition-colors">
-              {b.props.heading}
+            <a key={b.id} href={`/${b.slug}`} onClick={(e) => go(e, b.slug)} className="text-muted hover:text-ink transition-colors">
+              {b.label}
             </a>
           ))}
         </div>
@@ -52,8 +59,8 @@ export default function Navbar({ blocks, heroVisible }: { blocks: Block[]; heroV
       {open && (
         <div className="md:hidden glass-modal max-w-6xl mx-auto mt-2 p-4 flex flex-col gap-3">
           {links.map((b) => (
-            <a key={b.id} href={`#${b.id}`} onClick={() => setOpen(false)}>
-              {b.props.heading}
+            <a key={b.id} href={`/${b.slug}`} onClick={(e) => go(e, b.slug)}>
+              {b.label}
             </a>
           ))}
         </div>

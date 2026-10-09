@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import type { Block } from "@/lib/blocks";
+import { resolveSlugs, type Block } from "@/lib/blocks";
 import HeroBlock from "@/components/blocks/HeroBlock";
 import { useEventDate } from "@/hooks/useCountdown";
 import { NewsletterForm, RegisterForm, AttendeesForm, TicketForm } from "@/components/Forms";
@@ -349,5 +349,6 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
 }
 
 export default function BlockRenderer({ blocks, onHeroVisible }: { blocks: Block[]; onHeroVisible?: (v: boolean) => void }) {
-  return <>{blocks.map((b) => <Render key={b.id} b={b} onHeroVisible={onHeroVisible} />)}</>;
+  const slugs = resolveSlugs(blocks);
+  return <>{blocks.map((b) => <Render key={b.id} b={{ ...b, id: slugs[b.id] }} onHeroVisible={onHeroVisible} />)}</>;
 }

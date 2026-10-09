@@ -1,5 +1,5 @@
 export type Item = Record<string, string>;
-export type Block = { id: string; type: BlockType; props: Record<string, any> };
+export type Block = { id: string; type: BlockType; props: Record<string, any>; name?: string; slug?: string; showInNav?: boolean };
 export type BlockType =
   | "hero" | "about" | "tracks" | "schedule" | "prizes" | "speakers" | "sponsors"
   | "faq" | "register" | "attendees" | "tickets" | "newsletter" | "text" | "image" | "cta" | "footer";
@@ -98,7 +98,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     ],
   },
   speakers: {
-    label: "Speakers, mentors and judges", nav: true,
+    label: "People (speakers, judges, team)", nav: true,
     defaults: {
       heading: "Speakers and judges",
       items: [
@@ -195,3 +195,29 @@ export const newBlock = (type: BlockType): Block => ({
 
 const order: BlockType[] = ["hero", "about", "tracks", "schedule", "prizes", "speakers", "sponsors", "faq", "register", "newsletter", "footer"];
 export const DEFAULT_BLOCKS: Block[] = order.map((t) => ({ ...newBlock(t), id: t }));
+
+// ---- Section names, URL slugs and navbar helpers ----
+export const slugify = (s: string) =>
+  s.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+
+const RESERVED = new Set(["admin", "api", "exam", "preview", "tickets", "login", "_next", "hero"]);
+
+/** Unique URL slug for every block. Priority: pinned slug, section name, heading, block type. */
+export function resolveSlugs(blocks: Block[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  const used = new Set<string>();
+  for (const b of blocks) if (b.type === "hero") { out[b.id] = "hero"; used.add("hero"); }
+  for (const b of blocks) {
+    if (b.type === "hero") continue;
+    let base = slugify(b.slug || "") || slugify(b.name || "") || slugify(String(b.props?.heading || b.props?.title || "")) || slugify(b.type);
+    if (RESERVED.has(base)) base += "-section";
+    let sl = base, n = 2;
+    while (used.has(sl)) sl = `${base}-${n++}`;
+    used.add(sl);
+    out[b.id] = sl;
+  }
+  return out;
+}
+
+export const navLabel = (b: Block) => b.name || String(b.props?.heading || "") || "";
+export const inNav = (b: Block) => b.type !== "hero" && (b.showInNav ?? !!BLOCK_DEFS[b.type]?.nav) && !!navLabel(b);
