@@ -41,9 +41,14 @@ export async function POST(req: NextRequest) {
   let sent = 0;
   let lastError: string | null = null;
   const CONCURRENCY = 5;
+  // SendByte: stable per-broadcast idempotency — same batchId retries dedup, new broadcast gets new batchId
+  const batchId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const ik = (email: string) => `broadcast:${String(subject).slice(0, 40)}:${email.toLowerCase()}:${batchId}`;
   for (let i = 0; i < list.length; i += CONCURRENCY) {
     const chunk = list.slice(i, i + CONCURRENCY);
-    const results = await Promise.all(chunk.map((s) => sendEmail(s.email, String(subject), html(s.token))));
+    const results = await Promise.all(
+      chunk.map((s) => sendEmail(s.email, String(subject), html(s.token), { idempotencyKey: ik(s.email) }))
+    );
     for (const r of results) {
       if (r.ok) sent += 1;
       else lastError = r.error ?? "send failed";
