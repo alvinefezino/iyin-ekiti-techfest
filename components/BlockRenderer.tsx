@@ -204,8 +204,12 @@ function SponsorPromoCard({ s }: { s: Item }) {
       >
         {highlighted && (
           <div className="absolute -top-9 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center pointer-events-none select-none" aria-hidden>
-            <span className="whitespace-nowrap text-[10px] tracking-[0.14em] uppercase font-black px-2.5 py-1 rounded-full bg-[#F57F17] text-white shadow-[0_4px_16px_rgba(245,127,23,0.5)] border border-white/20">
-              {s.badge?.trim() || "Food sponsor"}
+            <span className="sponsor-pill-wrap">
+              <span className="absolute inset-0 rounded-full bg-[#F57F17]/40 sponsor-pill-pulse pointer-events-none" aria-hidden />
+              <span className="absolute inset-0 rounded-full border border-[#F57F17]/30 bg-[#F57F17]/10 sponsor-pill-pulse2 pointer-events-none" aria-hidden />
+              <span className="relative whitespace-nowrap text-[10px] tracking-[0.14em] uppercase font-black px-2.5 py-1 rounded-full bg-[#F57F17] text-white shadow-[0_4px_16px_rgba(245,127,23,0.5)] border border-white/20 sponsor-pill-core">
+                {s.badge?.trim() || "Food sponsor"}
+              </span>
             </span>
             <svg width="14" height="28" viewBox="0 0 14 28" fill="none" className="sponsor-arrow -mt-px drop-shadow-[0_2px_8px_rgba(245,127,23,0.6)]" aria-hidden>
               <path d="M7 0V20" stroke="#F57F17" strokeWidth="2.2" strokeLinecap="round" />
