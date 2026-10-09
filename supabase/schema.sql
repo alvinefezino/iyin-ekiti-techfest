@@ -158,3 +158,17 @@ create policy "media_admin_delete" on storage.objects for delete using (bucket_i
 
 -- After creating your admin user in Auth, run:
 -- insert into admins (user_id) values ('PASTE-USER-UUID');
+
+create table if not exists sponsor_promo_payments (
+  id uuid primary key default gen_random_uuid(),
+  sponsor_name text not null,
+  promo_code text not null,
+  bank_name text,
+  account_number text,
+  account_name text,
+  reference_id text not null,
+  status text not null default 'pending' check (status in ('pending','verified','rejected')),
+  created_at timestamptz not null default now()
+);
+alter table sponsor_promo_payments enable row level security;
+create policy "admin_sponsor_promo" on sponsor_promo_payments for all using (is_admin()) with check (is_admin());

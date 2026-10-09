@@ -322,3 +322,66 @@ export function CheckinPanel() {
     </div>
   );
 }
+
+export function SponsorPromoPanel() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [msg, setMsg] = useState("");
+  const load = async () => {
+    const res = await fetch("/api/admin/sponsor-promos");
+    const j = await res.json().catch(()=>({}));
+    if (res.ok) setRows(j.rows ?? []);
+    else setMsg(j.error || "Failed to load");
+  };
+  useEffect(()=>{ load(); }, []);
+  const patch = async (id:string, status:string) => {
+    setMsg("Saving…");
+    const res = await fetch("/api/admin/sponsor-promos", { method:"PATCH", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ id, status }) });
+    const j = await res.json().catch(()=>({}));
+    if (!res.ok) setMsg(j.error || "Failed");
+    else { setMsg("Updated"); load(); }
+  };
+  const csv = () => {
+    const head = ["sponsor_name","promo_code","reference_id","status","bank_name","account_number","account_name","created_at"];
+    const esc=(v:any)=>'"'+String(v??"").replace(/"/g,'""')+'"';
+    const out=[head.join(","), ...rows.map((r:any)=> head.map((h)=> esc(r[h])).join(","))].join("\n");
+    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([out],{type:"text/csv"})); a.download="sponsor_promo_payments.csv"; a.click();
+  };
+  const pending = rows.filter((r:any)=> r.status==="pending").length;
+  return (
+    <div className="glass p-4 grid gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-semibold">Sponsor promo payments {pending ? <span className="ml-2 px-2 py-0.5 rounded-full bg-[#F57F17] text-black text-xs">{pending} pending</span> : null}</h2>
+        <div className="flex gap-2">
+          <button className="btn-ghost !py-1 text-sm" onClick={load}>Refresh</button>
+          <button className="btn-ghost !py-1 text-sm" onClick={csv}>Download CSV</button>
+        </div>
+      </div>
+      <p className="text-xs text-muted">Reference IDs submitted from the orange promo flow (click highlighted sponsor → copy promo code → Reference ID → Complete payment).</p>
+      {msg && <p className="text-xs text-teal">{msg}</p>}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[52rem]">
+          <thead><tr className="text-left text-muted"><th className="py-1">When</th><th>Sponsor</th><th>Promo</th><th>Reference ID</th><th>Bank</th><th>Account</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {rows.map((r:any)=> (
+              <tr key={r.id} className="border-t border-white/10">
+                <td className="py-2 text-xs text-muted">{new Date(r.created_at).toLocaleString()}</td>
+                <td className="text-xs font-medium">{r.sponsor_name}</td>
+                <td className="font-mono text-xs text-[#F57F17]">{r.promo_code}</td>
+                <td className="font-mono text-xs font-bold">{r.reference_id}</td>
+                <td className="text-xs">{r.bank_name || "—"}</td>
+                <td className="text-xs"><span className="font-mono">{r.account_number || "—"}</span><span className="text-muted"> {r.account_name || ""}</span></td>
+                <td><span className={`px-2 py-0.5 rounded-full text-xs ${r.status==="verified"?"bg-[#F57F17] text-black": r.status==="rejected"?"bg-white text-black":"bg-white/15 text-white border border-white/15"}`}>{r.status}</span></td>
+                <td className="flex gap-1 py-1">
+                  <button className="px-2 py-1 rounded-full bg-[#F57F17] text-black text-xs disabled:opacity-40" disabled={r.status==="verified"} onClick={()=>patch(r.id,"verified")}>Verify</button>
+                  <button className="px-2 py-1 rounded-full bg-white/10 text-xs disabled:opacity-40" disabled={r.status==="rejected"} onClick={()=>patch(r.id,"rejected")}>Reject</button>
+                </td>
+              </tr>
+            ))}
+            {!rows.length && <tr><td colSpan={8} className="py-8 text-center text-muted text-sm">No payments yet. Highlight a sponsor in Page builder (orange arrow + promo fields), publish, then test the flow on the site.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+

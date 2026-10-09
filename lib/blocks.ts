@@ -116,10 +116,28 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
   },
   sponsors: {
     label: "Sponsors",
-    defaults: { heading: "Sponsors", items: [{ name: "Sponsor", image: "", badge: "", highlight: "" }, { name: "Sponsor", image: "", badge: "", highlight: "" }] },
+    defaults: {
+      heading: "Sponsors",
+      items: [
+        { name: "Sponsor", image: "", badge: "", highlight: "", promoEnabled: "", promoCode: "IYINTECHFEST", bankName: "", accountNumber: "", accountName: "" },
+        { name: "Sponsor", image: "", badge: "", highlight: "", promoEnabled: "", promoCode: "IYINTECHFEST", bankName: "", accountNumber: "", accountName: "" },
+      ],
+    },
     fields: [
       { key: "heading", label: "Heading", kind: "text" },
-      { key: "items", label: "Sponsors", kind: "items", fields: [{ key: "name", label: "Name", kind: "text" }, { key: "image", label: "Logo", kind: "image" }, { key: "badge", label: "Badge (e.g. Food sponsor — shown when highlighted)", kind: "text", placeholder: "Food sponsor" } as SubField, { key: "highlight", label: "Highlight with animated arrow", kind: "checkbox" } as SubField] },
+      {
+        key: "items", label: "Sponsors", kind: "items", fields: [
+          { key: "name", label: "Name", kind: "text" } as SubField,
+          { key: "image", label: "Logo", kind: "image" } as SubField,
+          { key: "badge", label: "Badge (e.g. Food sponsor — shows above card)", kind: "text", placeholder: "Food sponsor" } as SubField,
+          { key: "highlight", label: "Highlight with animated orange arrow (clickable)", kind: "checkbox" } as SubField,
+          { key: "promoEnabled", label: "Enable promo flow on click (shows promo code → payment modal)", kind: "checkbox" } as SubField,
+          { key: "promoCode", label: "Promo code", kind: "text", placeholder: "IYINTECHFEST" } as SubField,
+          { key: "bankName", label: "Bank name", kind: "text", placeholder: "e.g. Access Bank" } as SubField,
+          { key: "accountNumber", label: "Account number", kind: "text", placeholder: "0123456789" } as SubField,
+          { key: "accountName", label: "Account name", kind: "text", placeholder: "IYIN TECHFEST" } as SubField,
+        ]
+      },
     ],
   },
   faq: {

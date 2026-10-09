@@ -156,6 +156,156 @@ function ScheduleBlock({ heading, list, id }: { heading: string; list: Item[]; i
   );
 }
 
+
+function SponsorPromoCard({ s }: { s: Item }) {
+  const highlighted = s.highlight === "1" || s.highlight === "true" || (s as any).highlight === true;
+  const promoEnabled = s.promoEnabled === "1" || s.promoEnabled === "true" || (s as any).promoEnabled === true;
+  const active = highlighted || promoEnabled;
+  const promoCode = (s.promoCode || "IYINTECHFEST").trim() || "IYINTECHFEST";
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showPay, setShowPay] = useState(false);
+  const [refId, setRefId] = useState("");
+  const [phase, setPhase] = useState<"idle" | "verifying" | "done">("idle");
+  const [msg, setMsg] = useState("");
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try { await navigator.clipboard.writeText(promoCode); } catch { const ta=document.createElement("textarea"); ta.value=promoCode; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+    setCopied(true);
+    setTimeout(() => setShowPay(true), 350);
+  };
+
+  const completePayment = async () => {
+    if (!refId.trim()) { setMsg("Enter your Reference ID"); return; }
+    setMsg("");
+    setPhase("verifying");
+    try {
+      const res = await fetch("/api/sponsor-promo", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ sponsor_name: s.name || "Sponsor", promo_code: promoCode, bank_name: s.bankName || "", account_number: s.accountNumber || "", account_name: s.accountName || "", reference_id: refId.trim() }) });
+      const j = await res.json().catch(()=>({}));
+      if (!res.ok) throw new Error(j.error || "Could not save. Try again.");
+      setPhase("done");
+      setTimeout(()=>{ setShowPay(false); setOpen(false); setCopied(false); setPhase("idle"); setRefId(""); setMsg(""); }, 1600);
+    } catch (e:any) {
+      setPhase("idle");
+      setMsg(e.message || "Failed");
+    }
+  };
+
+  return (
+    <>
+      <div
+        className={"relative " + (highlighted ? "sponsor-highlight" : "") + (active ? " cursor-pointer" : "")}
+        onClick={() => { if (active) { setOpen((v)=>!v); if(open){ setCopied(false); } } }}
+        role={active ? "button" : undefined}
+        tabIndex={active ? 0 : undefined}
+        onKeyDown={(e)=>{ if(active && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); setOpen(v=>!v); } }}
+        aria-expanded={active ? open : undefined}
+      >
+        {highlighted && (
+          <div className="absolute -top-9 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center pointer-events-none select-none" aria-hidden>
+            <span className="whitespace-nowrap text-[10px] tracking-[0.14em] uppercase font-black px-2.5 py-1 rounded-full bg-[#F57F17] text-white shadow-[0_4px_16px_rgba(245,127,23,0.5)] border border-white/20">
+              {s.badge?.trim() || "Food sponsor"}
+            </span>
+            <svg width="14" height="28" viewBox="0 0 14 28" fill="none" className="sponsor-arrow -mt-px drop-shadow-[0_2px_8px_rgba(245,127,23,0.6)]" aria-hidden>
+              <path d="M7 0V20" stroke="#F57F17" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M7 26L2.2 17H11.8L7 26Z" fill="#F57F17" />
+            </svg>
+          </div>
+        )}
+        <Card>
+          <div className={"grid gap-2 place-items-center py-2 transition-all rounded-xl " + (highlighted ? "pt-7 ring-1 ring-[#F57F17]/30" : "") + (active && open ? " ring-2 ring-[#F57F17]/50" : "")}>
+            {s.image ? <Img src={s.image} alt={s.name} className="h-14 object-contain" /> : null}
+            <div className="text-center text-sm font-medium">{s.name || "Sponsor"}</div>
+            {active && <span className="text-[11px] text-[#F57F17] font-semibold hidden md:inline-flex items-center gap-1.5">Tap to get promo <span className="w-5 h-px bg-[#F57F17] inline-block" />→</span>}
+          </div>
+        </Card>
+
+        {active && open && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+12px)] z-20 w-[min(300px,88vw)] promo-in"
+            onClick={(e)=>e.stopPropagation()}
+          >
+            <div className="rounded-xl bg-[#0a2a12] border border-[#F57F17]/40 shadow-[0_10px_30px_rgba(245,127,23,0.35),0_4px_12px_rgba(0,0,0,0.45)] overflow-hidden">
+              <div className="h-1 bg-[#F57F17]" />
+              <div className="p-3.5">
+                <div className="text-[11px] tracking-[0.12em] uppercase text-white/60 font-semibold">Promo Code</div>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="font-mono font-black text-[#F57F17] text-[15px] tracking-wide break-all">IYINTECHFEST</span>
+                  <span className="text-white/25">·</span>
+                  <span className="font-mono text-sm text-white">{promoCode !== "IYINTECHFEST" ? promoCode : ""}</span>
+                  <button
+                    onClick={handleCopy}
+                    className={"ml-auto inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold transition-colors shrink-0 " + (copied ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white hover:bg-[#ff8c1a]")}
+                    aria-label="Copy promo code"
+                  >
+                    {copied ? (
+                      <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 13l4 4L19 7" /></svg> Copied</>
+                    ) : (
+                      <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v3"/></svg> Copy</>
+                    )}
+                  </button>
+                </div>
+                <div className="text-[11px] text-white/50 mt-1">Promo Code: <b className="text-white font-mono">{promoCode}</b></div>
+                {copied && <p className="text-xs text-[#F57F17] mt-2 font-medium">Copied! Continuing to payment…</p>}
+              </div>
+            </div>
+            <div className="mx-auto -mt-px w-3 h-3 rotate-45 bg-[#0a2a12] border-l border-t border-[#F57F17]/40 -translate-y-[7px]" aria-hidden />
+          </div>
+        )}
+      </div>
+
+      {showPay && (
+        <div className="fixed inset-0 z-[80] grid place-items-center p-4 bg-black/60 backdrop-blur-sm" onClick={()=> phase==="idle" && setShowPay(false)}>
+          <div className="w-full max-w-md rounded-2xl bg-[#0a2a12] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in" onClick={(e)=>e.stopPropagation()}>
+            <div className="h-1 bg-[#F57F17]" />
+            <div className="p-5">
+              {phase==="done" ? (
+                <div className="grid place-items-center py-6 text-center">
+                  <div className="w-16 h-16 rounded-full bg-[#F57F17] grid place-items-center" style={{animation:"verify-pop 0.35s ease-out"}}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" style={{strokeDasharray:24, animation:"verify-draw 0.45s ease-out 0.15s both"}} /></svg>
+                  </div>
+                  <p className="mt-3 font-semibold">Payment submitted</p>
+                  <p className="text-sm text-white/60">We are verifying your Reference ID.</p>
+                </div>
+              ) : phase==="verifying" ? (
+                <div className="grid place-items-center py-10 text-center">
+                  <div className="w-12 h-12 rounded-full border-4 border-[#F57F17]/30 border-t-[#F57F17]" style={{animation:"verify-spin 0.9s linear infinite"}} />
+                  <p className="mt-4 font-semibold text-[#F57F17]">Verifying…</p>
+                  <p className="text-xs text-white/60 mt-1">Checking Reference ID {refId}</p>
+                </div>
+              ) : (
+                <>
+                  <h3 className="font-semibold text-lg leading-tight">Complete payment for {s.name || "Sponsor"}</h3>
+                  <p className="text-sm text-white/60 mt-1">Use the account below. Enter your bank Reference ID to confirm.</p>
+                  <div className="mt-4 grid gap-3 rounded-xl bg-white/[0.06] border border-white/10 p-3.5">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div><div className="text-[11px] tracking-widest uppercase text-white/50">Bank</div><div className="font-medium">{s.bankName || "—"}</div></div>
+                      <div><div className="text-[11px] tracking-widest uppercase text-white/50">Account name</div><div className="font-medium break-all">{s.accountName || "—"}</div></div>
+                    </div>
+                    <div><div className="text-[11px] tracking-widest uppercase text-white/50">Account number</div><div className="font-mono text-lg font-bold tracking-wide">{s.accountNumber || "—"}</div></div>
+                    <div className="text-xs text-white/50">Promo code applied: <b className="text-[#F57F17] font-mono">{promoCode}</b></div>
+                  </div>
+                  <label className="block mt-4 text-sm">
+                    <span className="text-xs font-semibold tracking-wide uppercase text-white/70">Reference ID</span>
+                    <input className="input mt-1.5 focus:border-[#F57F17]" placeholder="e.g. 1234567890" value={refId} onChange={(e)=>setRefId(e.target.value)} />
+                  </label>
+                  {msg && <p className="text-xs text-red-300 mt-2">{msg}</p>}
+                  <div className="mt-4 flex gap-2">
+                    <button className="btn-ghost flex-1" onClick={()=>setShowPay(false)}>Cancel</button>
+                    <button className="btn-primary flex-1 !bg-[#F57F17] hover:!bg-[#ff8c1a]" onClick={completePayment}>Complete payment</button>
+                  </div>
+                  <p className="text-[11px] text-white/40 text-center mt-3">Payments are verified by admin.</p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function Card({ children }: { children: React.ReactNode }) {
   return <div className="glass p-5">{children}</div>;
 }
@@ -250,30 +400,9 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
         <div className="section" id={b.id}>
           <h2>{p.heading}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {items(b).map((s, i) => {
-              const highlighted = s.highlight === "1" || s.highlight === "true" || (s.highlight as any) === true;
-              return (
-                <div key={i} className={"relative " + (highlighted ? "sponsor-highlight" : "")}>
-                  {highlighted && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center pointer-events-none select-none" aria-hidden>
-                      <span className="whitespace-nowrap text-[10px] tracking-[0.14em] uppercase font-black px-2.5 py-1 rounded-full bg-[#F57F17] text-white shadow-[0_4px_16px_rgba(245,127,23,0.5)] border border-white/20">
-                        {s.badge?.trim() || "Featured"}
-                      </span>
-                      <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="sponsor-arrow -mt-px drop-shadow-[0_2px_6px_rgba(245,127,23,0.6)]" aria-hidden>
-                        <path d="M8 10L0 0h16L8 10z" fill="#F57F17" />
-                      </svg>
-                    </div>
-                  )}
-                  <Card>
-                    <div className={"grid gap-2 place-items-center py-2 transition-all " + (highlighted ? "pt-4 ring-1 ring-[#F57F17]/30 rounded-xl" : "")}>
-                      {s.image ? <Img src={s.image} alt={s.name} className="h-14 object-contain" /> : null}
-                      <div className="text-center text-sm font-medium">{s.name || "Sponsor"}</div>
-                      {highlighted && <span className="sponsor-arrow inline-flex items-center gap-1 text-[11px] text-[#F57F17] font-semibold">— <span className="w-6 h-px bg-[#F57F17] inline-block" /> →</span>}
-                    </div>
-                  </Card>
-                </div>
-              );
-            })}
+            {items(b).map((s, i) => (
+              <SponsorPromoCard key={i} s={s} />
+            ))}
           </div>
         </div>
       );
