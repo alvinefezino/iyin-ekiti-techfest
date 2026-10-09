@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
 
   await sb.from("broadcasts").insert({ subject: String(subject), body: String(body), sent_at: new Date().toISOString() });
-  if (lastError && lastError.includes("example.com")) lastError += " \u2014 Resend test mode (EMAIL_FROM=onboarding@resend.dev) only delivers to your Resend account email. Remove test rows or verify a domain at resend.com/domains and set EMAIL_FROM to noreply@yourdomain.com.";
+  if (lastError && lastError.includes("example.com")) lastError += " \u2014 SMTP rejected the address (often onboarding@resend.dev in dev). Set EMAIL_FROM to your real sender like noreply@iyinekititechfest.com and use GMAIL_USER+GMAIL_APP_PASSWORD or SMTP_HOST.";
   const skippedNote = skipped ? ` Skipped ${skipped} test/duplicate address(es).` : "";
   if (sent === 0 && lastError) return NextResponse.json({ ok: false, sent, total: list.length, skipped, error: lastError + skippedNote }, { status: 502 });
   if (skipped) lastError = (lastError ? lastError + skippedNote : skippedNote.trim());

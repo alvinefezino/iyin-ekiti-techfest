@@ -2,16 +2,12 @@ import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import { SITE } from "@/lib/site";
 
-const FROM = process.env.EMAIL_FROM || "Iyin-Ekiti TechFest <onboarding@resend.dev>";
-
-function useSmtp() {
-  const p = (process.env.EMAIL_PROVIDER || "").toLowerCase();
-  if (p === "smtp") return true;
-  if (p === "resend") return false;
-  return !!(process.env.SMTP_HOST || process.env.GMAIL_USER);
-}
+const FROM =
+  process.env.EMAIL_FROM ||
+  (process.env.GMAIL_USER ? `Iyin-Ekiti TechFest <${process.env.GMAIL_USER}>` : "Iyin-Ekiti TechFest <noreply@iyinekititechfest.com>");
 
 let _transporter: Transporter | null = null;
+
 function getTransporter(): Transporter | null {
   if (_transporter) return _transporter;
   if (process.env.SMTP_HOST) {
@@ -46,27 +42,22 @@ function getTransporter(): Transporter | null {
 }
 
 export async function sendEmail(to: string | string[], subject: string, html: string) {
-  if (useSmtp()) {
-    const t = getTransporter();
-    if (!t) return { ok: false, error: "SMTP_HOST missing (set SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS or EMAIL_PROVIDER=resend)" };
-    const list = Array.isArray(to) ? to : [to];
-    try {
-      for (const rcpt of list) {
-        await t.sendMail({ from: FROM, to: rcpt, subject, html });
-      }
-      return { ok: true, error: null };
-    } catch (e: unknown) {
-      return { ok: false, error: e instanceof Error ? e.message : String(e) };
-    }
+  const t = getTransporter();
+  if (!t) {
+    return {
+      ok: false as const,
+      error: "No mail transporter configured. Set SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS or GMAIL_USER+GMAIL_APP_PASSWORD (and EMAIL_FROM).",
+    };
   }
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { ok: false, error: "RESEND_API_KEY missing (or set SMTP_HOST / EMAIL_PROVIDER=smtp)" };
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: FROM, to, subject, html }),
-  });
-  return { ok: res.ok, error: res.ok ? null : await res.text() };
+  const list = Array.isArray(to) ? to : [to];
+  try {
+    for (const rcpt of list) {
+      await t.sendMail({ from: FROM, to: rcpt, subject, html });
+    }
+    return { ok: true as const, error: null };
+  } catch (e: unknown) {
+    return { ok: false as const, error: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 export const shell = (inner: string) => `
