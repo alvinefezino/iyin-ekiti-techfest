@@ -511,3 +511,89 @@ export function SponsorPromoPanel() {
   );
 }
 
+export function AdminAIPanel() {
+  const [prompt, setPrompt] = useState("");
+  const [audience, setAudience] = useState<"subscribers" | "contestants">("contestants");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [counts, setCounts] = useState({ subs: 0, contestants: 0 });
+
+  useEffect(() => {
+    sb().from("subscribers").select("email").is("unsubscribed_at", null).then(({ data }) => setCounts((c) => ({ ...c, subs: (data ?? []).length })));
+    sb().from("hackathon_registrations").select("email").then(({ data }) => setCounts((c) => ({ ...c, contestants: new Set((data ?? []).map((r: any) => String(r.email).toLowerCase())).size })));
+  }, []);
+
+  const count = audience === "contestants" ? counts.contestants : counts.subs;
+
+  const draft = async () => {
+    if (!prompt.trim()) { setMsg("Describe what you want the email to say."); return; }
+    setDrafting(true); setMsg("Drafting with AI…");
+    try {
+      const res = await fetch("/api/admin/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, audience, mode: "broadcast" }) });
+      const j = await res.json().catch(() => ({} as any));
+      if (!res.ok) setMsg(j.error ? String(j.error).slice(0, 400) : `Failed ${res.status}`);
+      else { setSubject(j.subject || ""); setBody(j.body || ""); setMsg("Draft ready — review then Send. Uses {{name}} so each person gets their real name (from registration or Gmail like john.doe@gmail.com → John)."); }
+    } catch (e: any) { setMsg(String(e?.message || e).slice(0,300)); }
+    setDrafting(false);
+  };
+
+  const send = async () => {
+    if (!subject.trim() || !body.trim()) { setMsg("Subject and message are required."); return; }
+    if (!confirm(`Send to ${count} ${audience}? Each person will be addressed by their real name (Gmail fallback, never "first name" or "contestant").`)) return;
+    setSending(true); setMsg("Sending…");
+    const res = await fetch("/api/admin/broadcast", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject, body, audience }) });
+    const j = await res.json().catch(() => ({} as any));
+    setSending(false);
+    if (!res.ok) setMsg(j.error ? `Failed: ${String(j.error).slice(0,300)}` : `Failed (${res.status})`);
+    else if (j.sent === 0 && j.error) setMsg(`Failed: ${String(j.error).slice(0,300)}`);
+    else setMsg(`Sent to ${j.sent} of ${j.total}${j.skipped ? ` (skipped ${j.skipped} test/duplicate)` : ""}. ${j.error ? String(j.error).slice(0,200) : ""}`);
+  };
+
+  return (
+    <div className="grid lg:grid-cols-2 gap-4">
+      <div className="glass p-4 grid gap-3 content-start">
+        <h2 className="font-semibold">AI Assistant — Email drafts & sending</h2>
+        <p className="text-xs text-muted">Describe the email in plain English. AI drafts subject + body with {"{{name}}"} so each recipient gets their real name — from hackathon_registrations or Gmail (e.g. ada.lovelace@gmail.com → Ada), never &quot;first name&quot; or &quot;contestant&quot;.</p>
+        <div className="flex gap-1">
+          {(["contestants", "subscribers"] as const).map((a) => (
+            <button key={a} onClick={() => setAudience(a)} className={`px-3 py-1 rounded-full text-sm capitalize ${audience === a ? "bg-[#F57F17] text-black" : "bg-white/10"}`}>{a} <span className="text-xs opacity-70">({a === "contestants" ? counts.contestants : counts.subs})</span></button>
+          ))}
+        </div>
+        <textarea className="input min-h-[90px] text-sm" placeholder="e.g. Write a warm reminder to contestants that MVP submissions close Friday and they should prepare 5-slide decks." value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+        <button className="btn-primary !py-2 text-sm w-fit disabled:opacity-50" disabled={drafting} onClick={draft}>{drafting ? "Drafting…" : "Draft with AI"}</button>
+        <div className="border-t border-white/10 pt-3 grid gap-3">
+          <input className="input text-sm" placeholder="Subject (AI fills this)" value={subject} onChange={(e) => setSubject(e.target.value)} />
+          <textarea className="input min-h-[180px] text-sm whitespace-pre-wrap" placeholder="Message body — use {{name}} where you want the person's name. AI drafts this for you." value={body} onChange={(e) => setBody(e.target.value)} />
+          <div className="text-[11px] text-muted">Tip: keep {"{{name}}"} / {"{{firstName}}"} / {"{{fullName}}"} in the draft — server replaces it per-recipient before sending. Stray &quot;first name&quot; or &quot;contestant&quot; is auto-replaced with the real name.</div>
+          <button className="btn-primary !py-2 text-sm w-fit disabled:opacity-50" disabled={sending || !subject.trim() || !body.trim()} onClick={send}>{sending ? "Sending…" : `Send to ${count} ${audience}`}</button>
+        </div>
+        {msg && <p className="text-xs text-teal whitespace-pre-wrap break-words">{msg}</p>}
+      </div>
+      <div className="glass p-4 grid gap-3 content-start">
+        <h3 className="font-semibold text-sm">Preview (Gmail name fallback)</h3>
+        <p className="text-xs text-muted">How the greeting personalizes per recipient. If no registration name, Gmail local-part is used: john.doe123@gmail.com → John, ada_lovelace@gmail.com → Ada.</p>
+        <div className="rounded-xl border border-white/10 bg-black/20 p-3 grid gap-2">
+          <div className="text-xs"><span className="text-muted">Subject:</span> <b>{subject || <span className="text-muted">—</span>}</b></div>
+          <div className="text-xs whitespace-pre-wrap break-words bg-white/5 rounded-lg p-3 min-h-[160px]">{
+            body
+              ? body.replace(/\{\{\s*(name|firstName|first[_\- ]?name)\s*\}\}/gi, "John").replace(/\{\{\s*fullName\s*\}\}/gi, "John Doe").replace(/\b(first name|contestant)s?\b/gi, "John")
+              : <span className="text-muted">Draft appears here… try "Draft with AI" then edit before sending.</span>
+          }</div>
+          <div className="text-[11px] text-muted">Example recipient: ada.lovelace@gmail.com → &quot;Hi Ada,&quot; · Tobi (has registration name) → &quot;Hi Tobi,&quot; — never &quot;Hi first name,&quot; or &quot;Hi contestant,&quot;.</div>
+        </div>
+        <div className="rounded-xl border border-[#F57F17]/30 bg-[#F57F17]/10 p-3">
+          <div className="text-xs font-bold text-[#F57F17]">How names are picked</div>
+          <ul className="text-xs text-muted list-disc pl-4 mt-1 grid gap-1">
+            <li>Contestants: hackathon_registrations.full_name first word → fallback to Gmail local-part before @</li>
+            <li>Subscribers: registration name if email overlaps, else Gmail local-part</li>
+            <li>Exam & Invite mails: same Gmail fallback (Dear John, / Hi Ada,)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+

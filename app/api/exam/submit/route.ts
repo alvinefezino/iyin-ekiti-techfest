@@ -41,12 +41,17 @@ export async function POST(req: NextRequest) {
 
   await sb.from("exam_invites").update(payload).eq("id", invite.id);
 
-  // Resolve display name from hackathon registrations
-  let displayName = "there";
+  // Resolve display name from hackathon registrations, fallback to Gmail local-part (e.g. john.doe@gmail.com -> John)
+  let displayName = "";
   try {
     const { data: reg } = await sb.from("hackathon_registrations").select("full_name").ilike("email", invite.email).maybeSingle();
-    if (reg?.full_name) displayName = String(reg.full_name).trim().split(" ")[0] || String(reg.full_name).trim();
+    if (reg?.full_name) displayName = String(reg.full_name).trim().split(/\s+/)[0].replace(/[^A-Za-z\-']/g, "") || String(reg.full_name).trim().split(/\s+/)[0] || "";
   } catch {}
+  if (!displayName) {
+    const local = String(invite.email).split("@")[0] || "";
+    const first = local.split(/[._\-+]/)[0].replace(/\d+/g, "") || local.replace(/\d+/g, "") || "there";
+    displayName = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  }
 
   // Send result mail without hyphen in visible text
   try {

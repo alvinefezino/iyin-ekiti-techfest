@@ -34,7 +34,12 @@ export async function POST(req: NextRequest) {
       const { data: reg } = await sb.from("hackathon_registrations").select("full_name").ilike("email", email).maybeSingle();
       if (reg?.full_name) displayName = String(reg.full_name).trim();
     } catch {}
-    const greeting = displayName ? `Dear ${displayName},` : `Hello there,`;
+    if (!displayName) {
+      const local = String(email).split("@")[0] || "";
+      const first = local.split(/[._\-+]/)[0].replace(/\d+/g, "") || local.replace(/\d+/g, "") || "there";
+      displayName = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+    }
+    const greeting = `Dear ${displayName},`;
     const link = `${SITE.url}/exam/${token}`;
     const previewLink = `${link}?preview=1`;
     const html = shell(`
