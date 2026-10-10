@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { sendEmail, shell } from "@/lib/email";
-import { SITE } from "@/lib/site";
+import { sendEmail, hackathonEmailHtml } from "@/lib/email";
 import { limited } from "@/lib/rate";
 
 const schema = z.object({
@@ -19,11 +18,16 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Check your details and try again." }, { status: 400 });
   const d = parsed.data;
+  const email = d.email.toLowerCase().trim();
   const { error } = await supabaseAdmin().from("hackathon_registrations").insert({
-    full_name: d.full_name, email: d.email.toLowerCase(), phone: d.phone, team_name: d.team_name,
-    team_members: d.members.split("\n").map((s) => s.trim()).filter(Boolean),
+    full_name: d.full_name, email, phone: d.phone, team_name: d.team_name,
+    team_members: d.members.split("\\n").map((s) => s.trim()).filter(Boolean),
   });
   if (error) return NextResponse.json({ error: "Couldn't register. Try again." }, { status: 500 });
-  await sendEmail(d.email, `You are registered for the Iyin Ekiti TechFest hackathon`, shell(`<p>Hi ${d.full_name.replace(/[<>]/g, "")}, your hackathon registration is confirmed. We'll send next steps soon.</p>`));
+
+  // AI-handled automation: branded hackathon welcome (white logo header) - fire and forget so registration never hangs on SMTP
+  const html = hackathonEmailHtml(d.full_name);
+  sendEmail(email, `You are registered for the Iyin Ekiti TechFest hackathon`, html).catch((e) => console.error("[register] mail failed", e));
+
   return NextResponse.json({ ok: true });
 }

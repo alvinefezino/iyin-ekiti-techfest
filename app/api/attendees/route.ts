@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { sendEmail, shell } from "@/lib/email";
-import { SITE } from "@/lib/site";
+import { sendEmail, welcomeEmailHtml } from "@/lib/email";
 import { limited } from "@/lib/rate";
 
 const schema = z.object({
@@ -19,14 +18,19 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Check your details and try again." }, { status: 400 });
   const d = parsed.data;
+  const email = d.email.toLowerCase().trim();
   const { error } = await supabaseAdmin().from("event_attendees").insert({
     full_name: d.full_name,
-    email: d.email.toLowerCase(),
+    email,
     phone: d.phone,
     team_name: d.team_name,
-    team_members: d.members.split("\n").map((s) => s.trim()).filter(Boolean),
+    team_members: d.members.split("\\n").map((s) => s.trim()).filter(Boolean),
   });
   if (error) return NextResponse.json({ error: "Couldn't register. Try again." }, { status: 500 });
-  await sendEmail(d.email, `You are registered for Iyin Ekiti TechFest`, shell(`<p>Hi ${d.full_name.replace(/[<>]/g, "")}, your event registration is confirmed. We'll send next steps soon.</p>`));
+
+  // Welcome email for first-time attendee - white logo header, fire and forget
+  const html = welcomeEmailHtml(d.full_name);
+  sendEmail(email, `Welcome to Iyin Ekiti TechFest 2026`, html).catch((e) => console.error("[attendees] mail failed", e));
+
   return NextResponse.json({ ok: true });
 }
