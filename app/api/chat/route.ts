@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
   const system = `You are the official assistant for ${SITE.fullName}. Theme: ${SITE.theme}.
 The event is a hackathon in Iyin Ekiti. Current event date: ${date}.
 Answer ONLY from the knowledge below. If the answer isn't there, say you don't have that detail yet and suggest checking the website or contacting the organizers. Keep answers short and friendly.
+FORMATTING RULES: Never use markdown. Do not use asterisks (*), double asterisks (**), hashes (#), underscores, or bullet stars. Do not use **bold** or *italic* or - lists with *. Write in plain sentences. Use line breaks only when needed.
 
 KNOWLEDGE:
 ${knowledge}`;
@@ -99,8 +100,19 @@ ${knowledge}`;
           const payload = t.slice(5).trim();
           if (payload === "[DONE]") continue;
           try {
-            const delta = JSON.parse(payload).choices?.[0]?.delta?.content;
-            if (delta) controller.enqueue(enc.encode(delta));
+            let delta: string | undefined = JSON.parse(payload).choices?.[0]?.delta?.content;
+            if (delta) {
+              delta = delta
+                .replace(/\*\*/g, "")
+                .replace(/__([^_]+)__/g, "$1")
+                .replace(/`+/g, "")
+                .replace(/^#+\s*/gm, "")
+                .replace(/^\s*\*\s+/gm, "• ")
+                .replace(/\*([^\n*]+)\*/g, "$1");
+              // final strip of any remaining stray * on this chunk
+              delta = delta.replace(/\*/g, "");
+              controller.enqueue(enc.encode(delta));
+            }
           } catch {}
         }
       }
