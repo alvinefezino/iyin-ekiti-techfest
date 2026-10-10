@@ -157,22 +157,31 @@ function ScheduleBlock({ heading, list, id }: { heading: string; list: Item[]; i
   );
 }
 
-
 function SponsorPromoCard({ s }: { s: Item }) {
   const highlighted = s.highlight === "1" || s.highlight === "true" || (s as any).highlight === true;
   const promoEnabled = s.promoEnabled === "1" || s.promoEnabled === "true" || (s as any).promoEnabled === true;
   const active = highlighted || promoEnabled;
   const promoCode = (s.promoCode || "IYINTECHFEST").trim() || "IYINTECHFEST";
-  const bankName = (s.bankName || "Lumibakes&Treats").trim() || "Lumibakes&Treats";
-  const accountNumber = (s.accountNumber || "6586455889").trim() || "6586455889";
-  const accountName = (s.accountName || "OPay").trim() || "OPay";
-  const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [showPay, setShowPay] = useState(false);
-  const [refId, setRefId] = useState("");
-  const [phase, setPhase] = useState<"idle" | "verifying" | "done">("idle");
-  const [msg, setMsg] = useState("");
+
+  // Bank details locked to Opay / Lumibakes&Treats as requested
+  const bankName = "Opay";
+  const accountNumber = "6586455889";
+  const accountName = "Lumibakes&Treats";
+
+  const [showPromo, setShowPromo] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [copiedPromo, setCopiedPromo] = useState(false);
+  const [copiedPromoCheckout, setCopiedPromoCheckout] = useState(false);
+  const [copiedAcct, setCopiedAcct] = useState(false);
   const [combo, setCombo] = useState<Record<string, number>>({});
+  const [promoInput, setPromoInput] = useState("");
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [promoMsg, setPromoMsg] = useState("");
+  const [refId, setRefId] = useState("");
+  const [refErr, setRefErr] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "verifying" | "receipt">("idle");
+  const [msg, setMsg] = useState("");
+  const [receipt, setReceipt] = useState<null | { items: { name: string; qty: number; price: number }[]; total: number; paid: number; ref: string; discount: number }>(null);
 
   const selectedList = Object.entries(combo)
     .map(([id, qty]) => {
@@ -181,6 +190,8 @@ function SponsorPromoCard({ s }: { s: Item }) {
     })
     .filter(Boolean) as { item: MenuItem; qty: number }[];
   const total = selectedList.reduce((a, b) => a + b.item.price * b.qty, 0);
+  const discount = promoApplied ? Math.round(total * 0.15) : 0;
+  const finalTotal = promoApplied ? total - discount : total;
 
   const toggleItem = (id: string) => {
     setCombo((prev) => {
@@ -199,40 +210,103 @@ function SponsorPromoCard({ s }: { s: Item }) {
     return n;
   });
 
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try { await navigator.clipboard.writeText(promoCode); } catch { const ta=document.createElement("textarea"); ta.value=promoCode; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
-    setCopied(true);
-    setTimeout(() => setShowPay(true), 350);
+  const copyText = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); } catch { const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+  };
+
+  const handleCopyPromo = async () => {
+    await copyText(promoCode);
+    setCopiedPromo(true);
+    setTimeout(() => setCopiedPromo(false), 1800);
+  };
+  const handleCopyPromoCheckout = async () => {
+    await copyText(promoCode);
+    setCopiedPromoCheckout(true);
+    setTimeout(() => setCopiedPromoCheckout(false), 1600);
+  };
+  const handleCopyAcct = async () => {
+    await copyText(accountNumber);
+    setCopiedAcct(true);
+    setTimeout(()=> setCopiedAcct(false), 1600);
+  };
+
+  const handleApplyPromo = () => {
+    if (!promoInput.trim()) { setPromoMsg("Enter promo code"); return; }
+    if (promoApplied) { setPromoMsg("Promo already applied — 15% off"); return; }
+    if (promoInput.trim().toUpperCase() === promoCode.toUpperCase()) {
+      setPromoApplied(true);
+      setPromoMsg("Promo applied — 15% off");
+    } else {
+      setPromoMsg("Invalid promo code");
+    }
+  };
+
+  const openMenuFromPromo = () => {
+    setShowPromo(false);
+    setShowMenu(true);
   };
 
   const completePayment = async () => {
-    if (!refId.trim()) { setMsg("Enter your Reference ID"); return; }
     if (selectedList.length === 0) { setMsg("Pick at least one item from the menu to continue"); return; }
+    if (!refId.trim()) {
+      setRefErr(true);
+      setMsg("Reference / Transaction ID is required to proceed");
+      setTimeout(()=> setRefErr(false), 900);
+      // shake + focus
+      document.getElementById("ref-input")?.focus();
+      return;
+    }
     setMsg("");
+    setRefErr(false);
     setPhase("verifying");
     try {
       const payloadItems = selectedList.map(({ item, qty }) => ({ id: item.id, name: item.name, price: item.price, category: item.category, qty }));
-      const res = await fetch("/api/sponsor-promo", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ sponsor_name: s.name || "Sponsor", promo_code: promoCode, bank_name: bankName, account_number: accountNumber, account_name: accountName, reference_id: refId.trim(), items: payloadItems, total_naira: total }) });
+      const res = await fetch("/api/sponsor-promo", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ sponsor_name: s.name || "Sponsor", promo_code: promoCode, bank_name: bankName, account_number: accountNumber, account_name: accountName, reference_id: refId.trim(), items: payloadItems, total_naira: finalTotal }) });
       const j = await res.json().catch(()=>({}));
       if (!res.ok) throw new Error(j.error || "Could not save. Try again.");
-      setPhase("done");
-      setTimeout(()=>{ setShowPay(false); setOpen(false); setCopied(false); setPhase("idle"); setRefId(""); setMsg(""); setCombo({}); }, 1600);
+      // snapshot for receipt before clearing
+      setReceipt({
+        items: selectedList.map(({ item, qty }) => ({ name: item.name, qty, price: item.price })),
+        total,
+        paid: finalTotal,
+        ref: refId.trim(),
+        discount,
+      });
+      setPhase("receipt");
     } catch (e:any) {
       setPhase("idle");
       setMsg(e.message || "Failed");
     }
   };
 
+  const closeMenu = () => {
+    if (phase === "verifying") return;
+    setShowMenu(false);
+  };
+  const closeReceipt = () => {
+    setShowMenu(false);
+    setShowPromo(false);
+    setPhase("idle");
+    setReceipt(null);
+    setRefId("");
+    setPromoInput("");
+    setPromoApplied(false);
+    setPromoMsg("");
+    setCopiedPromo(false);
+    setCopiedPromoCheckout(false);
+    setMsg("");
+    setCombo({});
+  };
+
   return (
     <>
       <div
         className={"relative " + (highlighted ? "sponsor-highlight" : "") + (active ? " cursor-pointer" : "")}
-        onClick={() => { if (active) { setOpen((v)=>!v); if(open){ setCopied(false); } } }}
+        onClick={() => { if (active) setShowPromo(true); }}
         role={active ? "button" : undefined}
         tabIndex={active ? 0 : undefined}
-        onKeyDown={(e)=>{ if(active && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); setOpen(v=>!v); } }}
-        aria-expanded={active ? open : undefined}
+        onKeyDown={(e)=>{ if(active && (e.key==="Enter"||e.key===" ")) { e.preventDefault(); setShowPromo(true); } }}
+        aria-expanded={active ? showPromo : undefined}
       >
         {highlighted && (
           <div className="absolute -top-9 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center pointer-events-none select-none" aria-hidden>
@@ -250,68 +324,99 @@ function SponsorPromoCard({ s }: { s: Item }) {
           </div>
         )}
         <Card>
-          <div className={"grid gap-2 place-items-center py-2 transition-all rounded-xl " + (highlighted ? "pt-7 ring-1 ring-[#F57F17]/30" : "") + (active && open ? " ring-2 ring-[#F57F17]/50" : "")}>
+          <div className={"grid gap-2 place-items-center py-2 transition-all rounded-xl " + (highlighted ? "pt-7 ring-1 ring-[#F57F17]/30" : "") + (active && showPromo ? " ring-2 ring-[#F57F17]/50" : "")}>
             {s.image ? <Img src={s.image} alt={s.name} className="h-14 object-contain" /> : null}
             <div className="text-center text-sm font-medium">{s.name || "Sponsor"}</div>
             {active && <span className="text-[11px] text-[#F57F17] font-semibold hidden md:inline-flex items-center gap-1.5">Tap to view menu <span className="w-5 h-px bg-[#F57F17] inline-block" />→</span>}
             {active && <span className="text-[11px] text-[#F57F17] font-semibold inline-flex md:hidden items-center gap-1">Tap to order</span>}
           </div>
         </Card>
-
-        {active && open && (
-          <div
-            className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+12px)] z-20 w-[min(320px,92vw)] promo-in"
-            onClick={(e)=>e.stopPropagation()}
-          >
-            <div className="rounded-xl bg-[#0a2a12] border border-[#F57F17]/40 shadow-[0_10px_30px_rgba(245,127,23,0.35),0_4px_12px_rgba(0,0,0,0.45)] overflow-hidden">
-              <div className="h-1 bg-[#F57F17]" />
-              <div className="p-3.5">
-                <div className="text-[11px] tracking-[0.12em] uppercase text-white/60 font-semibold">Promo Code</div>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="font-mono font-black text-[#F57F17] text-[15px] tracking-wide break-all">IYINTECHFEST</span>
-                  <span className="text-white/25">·</span>
-                  <span className="font-mono text-sm text-white">{promoCode !== "IYINTECHFEST" ? promoCode : ""}</span>
-                  <button
-                    onClick={handleCopy}
-                    className={"ml-auto inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold transition-colors shrink-0 " + (copied ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white hover:bg-[#ff8c1a]")}
-                    aria-label="Copy promo code"
-                  >
-                    {copied ? (
-                      <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 13l4 4L19 7" /></svg> Copied</>
-                    ) : (
-                      <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v3"/></svg> Copy</>
-                    )}
-                  </button>
-                </div>
-                <div className="text-[11px] text-white/50 mt-1">Promo Code: <b className="text-white font-mono">{promoCode}</b></div>
-                {copied && <p className="text-xs text-[#F57F17] mt-2 font-medium">Copied! Opening menu…</p>}
-                <button onClick={()=>{ setShowPay(true); }} className="mt-3 w-full rounded-full bg-white text-[#013216] text-xs font-bold py-2 hover:bg-white/90">View menu and build combo</button>
-              </div>
-            </div>
-            <div className="mx-auto -mt-px w-3 h-3 rotate-45 bg-[#0a2a12] border-l border-t border-[#F57F17]/40 -translate-y-[7px]" aria-hidden />
-          </div>
-        )}
       </div>
 
-      {showPay && (
-        <div className="fixed inset-0 z-[80] grid place-items-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={()=> phase==="idle" && setShowPay(false)}>
+      {/* First modal — promo code only */}
+      {active && showPromo && (
+        <div className="fixed inset-0 z-[80] grid place-items-center p-4 bg-black/60 backdrop-blur-sm" onClick={()=> setShowPromo(false)}>
+          <div className="w-full max-w-[360px] rounded-2xl bg-[#0a2a12] border border-[#F57F17]/40 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in flex flex-col" onClick={(e)=>e.stopPropagation()}>
+            <div className="h-1 bg-[#F57F17] shrink-0" />
+            <div className="p-5 text-center">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs tracking-[0.14em] uppercase font-black text-white/60">Promo Code</h3>
+                <button onClick={()=> setShowPromo(false)} className="w-7 h-7 grid place-items-center rounded-full bg-white/10 hover:bg-white/15 text-white text-sm" aria-label="Close">×</button>
+              </div>
+              <div className="mt-4 rounded-xl bg-white/[0.07] border border-white/10 px-4 py-4">
+                <div className="font-mono font-black text-xl tracking-widest text-[#F57F17] break-all">{promoCode}</div>
+              </div>
+              <button
+                onClick={handleCopyPromo}
+                className={"mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full text-sm font-bold transition-colors " + (copiedPromo ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white hover:bg-[#ff8c1a]")}
+              >
+                {copiedPromo ? (
+                  <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 13l4 4L19 7" /></svg> Copied</>
+                ) : (
+                  <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v3"/></svg> Copy</>
+                )}
+              </button>
+              <button onClick={openMenuFromPromo} className="mt-3 w-full rounded-full bg-white text-[#013216] text-sm font-bold py-3 hover:bg-white/90">View menu and build combo</button>
+              <p className="text-[11px] text-white/40 mt-3">Copy the code and apply it at checkout for 15% off</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Second modal — menu + combo + checkout */}
+      {showMenu && (
+        <div className="fixed inset-0 z-[80] grid place-items-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={closeMenu}>
           <div className="w-full max-w-[560px] my-4 sm:my-6 rounded-2xl bg-[#0a2a12] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in max-h-[92vh] sm:max-h-[90vh] flex flex-col" onClick={(e)=>e.stopPropagation()}>
             <div className="h-1 bg-[#F57F17] shrink-0" />
             <div className="p-4 sm:p-5 overflow-y-auto flex-1 overscroll-contain">
-              {phase==="done" ? (
-                <div className="grid place-items-center py-6 text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#F57F17] grid place-items-center" style={{animation:"verify-pop 0.35s ease-out"}}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" style={{strokeDasharray:24, animation:"verify-draw 0.45s ease-out 0.15s both"}} /></svg>
-                  </div>
-                  <p className="mt-3 font-semibold">Order submitted</p>
-                  <p className="text-sm text-white/60">We are verifying your Reference ID.</p>
-                  {total>0 && <p className="text-xs text-white/50 mt-1">Total {formatNaira(total)}</p>}
-                </div>
-              ) : phase==="verifying" ? (
+              {phase==="verifying" ? (
                 <div className="grid place-items-center py-10 text-center">
                   <div className="w-12 h-12 rounded-full border-4 border-[#F57F17]/30 border-t-[#F57F17]" style={{animation:"verify-spin 0.9s linear infinite"}} />
                   <p className="mt-4 font-semibold text-[#F57F17]">Verifying…</p>
                   <p className="text-xs text-white/60 mt-1">Checking Reference ID {refId}</p>
+                </div>
+              ) : phase==="receipt" && receipt ? (
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-[#F57F17] grid place-items-center mx-auto" style={{animation:"verify-pop 0.35s ease-out"}}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" style={{strokeDasharray:24, animation:"verify-draw 0.45s ease-out 0.15s both"}} /></svg>
+                  </div>
+                  <h3 className="mt-3 text-lg font-bold">Payment successful</h3>
+                  <p className="text-sm text-white/60">Here is your receipt</p>
+
+                  <div className="mt-5 text-left rounded-xl bg-white text-[#0a2a12] overflow-hidden border border-black/10">
+                    <div className="px-4 py-3 bg-[#0a2a12] text-white flex items-center justify-between">
+                      <span className="text-xs tracking-[0.14em] uppercase font-black text-white/70">Receipt</span>
+                      <span className="text-[11px] font-mono text-white/60">{new Date().toLocaleString()}</span>
+                    </div>
+                    <div className="px-4 py-4">
+                      <div className="text-xs uppercase tracking-widest font-bold text-[#0a2a12]/50">Items</div>
+                      <div className="mt-2 grid gap-2">
+                        {receipt.items.map((r,i)=> (
+                          <div key={i} className="flex items-center justify-between gap-3 text-sm border-b border-black/5 pb-2 last:border-0 last:pb-0">
+                            <span className="flex-1">{r.name} <span className="text-black/40">×{r.qty}</span></span>
+                            <span className="font-mono font-bold">{formatNaira(r.price * r.qty)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-4 grid gap-1.5 text-sm border-t border-dashed border-black/10 pt-3">
+                        <div className="flex justify-between"><span className="text-black/60">Subtotal</span><span className="font-mono">{formatNaira(receipt.total)}</span></div>
+                        {receipt.discount>0 && <div className="flex justify-between text-[#0a7a33]"><span>Discount (15%)</span><span className="font-mono">-{formatNaira(receipt.discount)}</span></div>}
+                        <div className="flex justify-between text-base font-black"><span>Paid</span><span className="font-mono">{formatNaira(receipt.paid)}</span></div>
+                      </div>
+                      <div className="mt-4 rounded-lg bg-black/[0.04] border border-black/10 px-3 py-3">
+                        <div className="text-[11px] tracking-widest uppercase font-bold text-black/40">Reference / Transaction ID</div>
+                        <div className="font-mono font-bold text-sm break-all mt-1">{receipt.ref}</div>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                        <div><div className="text-black/40 uppercase tracking-widest font-bold">Bank</div><div className="font-semibold">{bankName}</div></div>
+                        <div><div className="text-black/40 uppercase tracking-widest font-bold">Account name</div><div className="font-semibold break-all">{accountName}</div></div>
+                      </div>
+                      <div className="mt-2 text-xs"><div className="text-black/40 uppercase tracking-widest font-bold">Account number</div><div className="font-mono font-bold text-base">{accountNumber}</div></div>
+                    </div>
+                  </div>
+
+                  <button onClick={closeReceipt} className="mt-5 w-full rounded-full bg-[#F57F17] text-white font-bold py-3 hover:bg-[#ff8c1a]">Done</button>
+                  <p className="text-[11px] text-white/40 mt-2">Keep this receipt — you will need your Reference ID for verification at the venue.</p>
                 </div>
               ) : (
                 <>
@@ -320,7 +425,7 @@ function SponsorPromoCard({ s }: { s: Item }) {
                       <h3 className="font-semibold text-[17px] sm:text-lg leading-tight">Order from {s.name || "Lumibakes & Treats"}</h3>
                       <p className="text-xs sm:text-sm text-white/60 mt-1">Build your combo then complete payment below</p>
                     </div>
-                    <button onClick={()=> setShowPay(false)} className="shrink-0 w-8 h-8 grid place-items-center rounded-full bg-white/10 hover:bg-white/15 text-white" aria-label="Close">×</button>
+                    <button onClick={closeMenu} className="shrink-0 w-8 h-8 grid place-items-center rounded-full bg-white/10 hover:bg-white/15 text-white" aria-label="Close">×</button>
                   </div>
 
                   <div className="mt-4 rounded-xl bg-white/[0.06] border border-white/10 p-3 sm:p-3.5">
@@ -384,32 +489,92 @@ function SponsorPromoCard({ s }: { s: Item }) {
                             </div>
                           ))}
                         </div>
-                        <div className="mt-3 flex items-center justify-between border-t border-[#F57F17]/20 pt-3">
-                          <span className="text-sm font-semibold">Total</span>
-                          <span className="font-mono font-black text-lg text-[#F57F17]">{formatNaira(total)}</span>
+                        <div className="mt-3 grid gap-1 border-t border-[#F57F17]/20 pt-3 text-sm">
+                          <div className="flex items-center justify-between"><span className="text-white/70">Subtotal</span><span className="font-mono font-bold">{formatNaira(total)}</span></div>
+                          {promoApplied && <div className="flex items-center justify-between text-[#7CFF9B]"><span>Discount 15%</span><span className="font-mono font-bold">-{formatNaira(discount)}</span></div>}
+                          <div className="flex items-center justify-between"><span className="font-semibold">Total to pay</span><span className="font-mono font-black text-lg text-[#F57F17]">{formatNaira(finalTotal)}</span></div>
+                          {promoApplied && <div className="text-[11px] text-white/50 line-through">Was {formatNaira(total)}</div>}
                         </div>
                         <button onClick={()=> setCombo({})} className="mt-2 text-xs text-white/60 underline underline-offset-4 hover:text-white">Clear combo</button>
                       </>
                     )}
                   </div>
 
+                  {/* Checkout — bank + promo apply + ref */}
                   <div className="mt-4 grid gap-3 rounded-xl bg-white/[0.06] border border-white/10 p-3.5">
+                    <h4 className="text-xs font-black tracking-[0.12em] uppercase text-white">Checkout</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                       <div><div className="text-[11px] tracking-widest uppercase text-white/50">Bank</div><div className="font-medium break-words">{bankName}</div></div>
                       <div><div className="text-[11px] tracking-widest uppercase text-white/50">Account name</div><div className="font-medium break-all">{accountName}</div></div>
                     </div>
-                    <div><div className="text-[11px] tracking-widest uppercase text-white/50">Account number</div><div className="font-mono text-lg font-bold tracking-wide break-all">{accountNumber}</div></div>
-                    <div className="text-xs text-white/50">Promo code applied: <b className="text-[#F57F17] font-mono">{promoCode}</b> <button onClick={handleCopy} className="ml-2 inline-flex px-2 py-1 rounded-full bg-[#F57F17] text-white text-[11px] font-bold">{copied ? "Copied" : "Copy"}</button></div>
-                    {total>0 && <div className="text-xs text-white/60">Pay exactly <b className="text-white font-mono">{formatNaira(total)}</b> for your combo</div>}
+                    <div>
+                      <div className="text-[11px] tracking-widest uppercase text-white/50">Account number</div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="font-mono text-lg font-bold tracking-wide break-all">{accountNumber}</span>
+                        <button onClick={handleCopyAcct} className={"inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-colors " + (copiedAcct ? "bg-white text-[#013216]" : "bg-white/10 text-white hover:bg-white/15")} aria-label="Copy account number">
+                          {copiedAcct ? (
+                            <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 13l4 4L19 7" /></svg> Copied</>
+                          ) : (
+                            <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v3"/></svg> Copy</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Total + promo copy + promo input */}
+                    <div className="rounded-xl bg-[#0a2a12] border border-[#F57F17]/20 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-white/60">Total</span>
+                        <span className={"font-mono font-black " + (promoApplied ? "text-white/50 line-through text-sm" : "text-white text-lg")}>{formatNaira(total || 0)}</span>
+                      </div>
+                      {promoApplied && (
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-xs font-bold text-[#7CFF9B]">After 15% off</span>
+                          <span className="font-mono font-black text-lg text-[#F57F17]">{formatNaira(finalTotal)}</span>
+                        </div>
+                      )}
+                      <div className="mt-3 flex items-center gap-2 text-xs">
+                        <span className="text-white/50">Promo:</span>
+                        <span className="font-mono font-bold text-[#F57F17]">{promoCode}</span>
+                        <button onClick={handleCopyPromoCheckout} className={"ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold " + (copiedPromoCheckout ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white")}>
+                          {copiedPromoCheckout ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <input
+                          className="input flex-1 !py-2 text-sm"
+                          placeholder="Paste promo code"
+                          value={promoInput}
+                          onChange={(e)=>{ setPromoInput(e.target.value); setPromoMsg(""); }}
+                          onKeyDown={(e)=> { if(e.key==="Enter") handleApplyPromo(); }}
+                        />
+                        <button onClick={handleApplyPromo} className={"px-4 py-2 rounded-full text-sm font-bold shrink-0 transition-colors " + (promoApplied ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white hover:bg-[#ff8c1a]")}>
+                          {promoApplied ? "Applied" : "Apply"}
+                        </button>
+                      </div>
+                      {promoMsg && <p className={"text-xs mt-2 " + (promoApplied ? "text-[#7CFF9B]" : promoMsg.includes("Invalid") || promoMsg.includes("Enter") ? "text-red-300" : "text-white/60")}>{promoMsg}</p>}
+                      {promoApplied && <p className="text-[11px] text-white/40 mt-1">You save {formatNaira(discount)}</p>}
+                    </div>
+
+                    {finalTotal>0 && <div className="text-xs text-white/60">Pay exactly <b className="text-white font-mono">{formatNaira(finalTotal)}</b> for your combo {promoApplied ? "(15% off applied)" : ""}</div>}
                   </div>
+
                   <label className="block mt-4 text-sm">
-                    <span className="text-xs font-semibold tracking-wide uppercase text-white/70">Reference ID</span>
-                    <input className="input mt-1.5 focus:border-[#F57F17]" placeholder="e.g. 1234567890" value={refId} onChange={(e)=>setRefId(e.target.value)} />
+                    <span className="text-xs font-semibold tracking-wide uppercase text-white/70">Reference / Transaction ID <span className="text-red-300">*</span></span>
+                    <input
+                      id="ref-input"
+                      className={"input mt-1.5 focus:border-[#F57F17] " + (refErr ? "border-red-400 !bg-red-500/10 shake" : "")}
+                      placeholder="e.g. 1234567890"
+                      value={refId}
+                      onChange={(e)=>{ setRefId(e.target.value); if(e.target.value.trim()) setRefErr(false); }}
+                      aria-invalid={refErr}
+                    />
+                    {refErr && <p className="text-xs text-red-300 mt-1.5 font-medium">Reference / Transaction ID is required to proceed</p>}
                   </label>
-                  {msg && <p className="text-xs text-red-300 mt-2">{msg}</p>}
+                  {msg && !refErr && <p className="text-xs text-red-300 mt-2">{msg}</p>}
                   <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                    <button className="btn-ghost flex-1 order-2 sm:order-1" onClick={()=>setShowPay(false)}>Cancel</button>
-                    <button className="btn-primary flex-1 order-1 sm:order-2 !bg-[#F57F17] hover:!bg-[#ff8c1a] py-3 text-sm font-bold" onClick={completePayment}>Complete payment {total>0 ? "· " + formatNaira(total) : ""}</button>
+                    <button className="btn-ghost flex-1 order-2 sm:order-1" onClick={closeMenu}>Cancel</button>
+                    <button className="btn-primary flex-1 order-1 sm:order-2 !bg-[#F57F17] hover:!bg-[#ff8c1a] py-3 text-sm font-bold" onClick={completePayment}>Complete payment {finalTotal>0 ? "· " + formatNaira(finalTotal) : ""}</button>
                   </div>
                   <p className="text-[11px] text-white/40 text-center mt-3">Payments are verified by admin. Your combo will be confirmed after verification.</p>
                 </>
