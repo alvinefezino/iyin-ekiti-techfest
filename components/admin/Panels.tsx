@@ -235,7 +235,7 @@ export function ExamPanel() {
     return (
       <div className="fixed inset-0 z-[80] grid place-items-center p-4">
         <div className="absolute inset-0 bg-black/60" onClick={()=> setDetail(null)} />
-        <div className="relative glass max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col rounded-2xl">
+        <div className="relative glass-modal max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col rounded-2xl">
           <div className="p-4 border-b border-white/10 flex justify-between items-start gap-3">
             <div>
               <div className="font-semibold text-sm">{nameFor(detail.email) ? nameFor(detail.email) + " " : ""}<span className="text-muted font-normal">{detail.email}</span></div>
