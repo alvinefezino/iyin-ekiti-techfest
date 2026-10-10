@@ -26,21 +26,35 @@ Answer ONLY from the knowledge below. If the answer isn't there, say you don't h
 KNOWLEDGE:
 ${knowledge}`;
 
-  const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
-      stream: true,
-      temperature: 0.3,
-      max_tokens: 600,
-      messages: [
-        { role: "system", content: system },
-        ...messages.slice(-10).map((m: any) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 2000) })),
-      ],
-    }),
-  });
-  if (!upstream.ok || !upstream.body) return new Response("Upstream error", { status: 502 });
+  let upstream: Response;
+  try {
+    upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        stream: true,
+        temperature: 0.3,
+        max_tokens: 600,
+        messages: [
+          { role: "system", content: system },
+          ...messages.slice(-10).map((m: any) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 2000) })),
+        ],
+      }),
+    });
+  } catch (e) {
+    console.error("[chat] fetch failed", e);
+    return new Response("Upstream network error", { status: 502 });
+  }
+  if (!upstream.ok) {
+    const text = await upstream.text().catch(() => "");
+    console.error("[chat] groq error", upstream.status, text.slice(0, 800));
+    return new Response(`Upstream error ${upstream.status}`, { status: 502 });
+  }
+  if (!upstream.body) {
+    console.error("[chat] groq no body");
+    return new Response("Upstream error: no body", { status: 502 });
+  }
 
   const enc = new TextEncoder();
   const dec = new TextDecoder();
