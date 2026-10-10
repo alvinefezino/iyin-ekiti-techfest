@@ -26,13 +26,15 @@ Answer ONLY from the knowledge below. If the answer isn't there, say you don't h
 KNOWLEDGE:
 ${knowledge}`;
 
-  let upstream: Response;
-  try {
-    upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  const FALLBACK_MODEL = "llama-3.1-8b-instant";
+  const requestedModel = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+
+  async function callGroq(model: string) {
+    return fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        model,
         stream: true,
         temperature: 0.3,
         max_tokens: 600,
@@ -42,14 +44,37 @@ ${knowledge}`;
         ],
       }),
     });
+  }
+
+  let upstream: Response;
+  try {
+    upstream = await callGroq(requestedModel);
   } catch (e) {
     console.error("[chat] fetch failed", e);
     return new Response("Upstream network error", { status: 502 });
   }
   if (!upstream.ok) {
     const text = await upstream.text().catch(() => "");
-    console.error("[chat] groq error", upstream.status, text.slice(0, 800));
-    return new Response(`Upstream error ${upstream.status}`, { status: 502 });
+    const isModelNotFound = upstream.status === 404 && /model/i.test(text);
+    console.error("[chat] groq error", upstream.status, text.slice(0, 800), isModelNotFound ? `(requested ${requestedModel})` : "");
+    if (isModelNotFound && requestedModel !== FALLBACK_MODEL) {
+      console.warn(`[chat] retrying with fallback ${FALLBACK_MODEL}`);
+      try {
+        const retry = await callGroq(FALLBACK_MODEL);
+        if (retry.ok && retry.body) {
+          upstream = retry;
+        } else {
+          const t2 = await retry.text().catch(() => "");
+          console.error("[chat] fallback also failed", retry.status, t2.slice(0, 800));
+          return new Response(`Upstream error ${upstream.status} model not found`, { status: 502 });
+        }
+      } catch (e) {
+        console.error("[chat] fallback fetch failed", e);
+        return new Response(`Upstream error ${upstream.status} model not found`, { status: 502 });
+      }
+    } else if (!isModelNotFound || requestedModel === FALLBACK_MODEL) {
+      return new Response(`Upstream error ${upstream.status}`, { status: 502 });
+    }
   }
   if (!upstream.body) {
     console.error("[chat] groq no body");
