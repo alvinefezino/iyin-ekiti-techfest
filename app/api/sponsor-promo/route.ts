@@ -3,6 +3,14 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { limited } from "@/lib/rate";
 
+const itemSchema = z.object({
+  id: z.string().max(80),
+  name: z.string().max(200),
+  price: z.number().int().min(0),
+  category: z.string().max(80),
+  qty: z.number().int().min(1).max(20).optional().default(1),
+});
+
 const schema = z.object({
   sponsor_name: z.string().min(1).max(200),
   promo_code: z.string().min(1).max(80),
@@ -10,6 +18,8 @@ const schema = z.object({
   account_number: z.string().max(80).optional().default(""),
   account_name: z.string().max(200).optional().default(""),
   reference_id: z.string().min(3).max(120),
+  items: z.array(itemSchema).max(30).optional().default([]),
+  total_naira: z.number().int().min(0).max(1000000).optional().default(0),
 });
 
 export async function POST(req: NextRequest) {
@@ -25,6 +35,8 @@ export async function POST(req: NextRequest) {
     account_number: d.account_number,
     account_name: d.account_name,
     reference_id: d.reference_id,
+    items: d.items,
+    total_naira: d.total_naira,
   });
   if (error) return NextResponse.json({ error: "Could not save. Try again." }, { status: 500 });
   return NextResponse.json({ ok: true });

@@ -119,8 +119,8 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     defaults: {
       heading: "Sponsors",
       items: [
-        { name: "Sponsor", image: "", badge: "", highlight: "", promoEnabled: "", promoCode: "IYINTECHFEST", bankName: "", accountNumber: "", accountName: "" },
-        { name: "Sponsor", image: "", badge: "", highlight: "", promoEnabled: "", promoCode: "IYINTECHFEST", bankName: "", accountNumber: "", accountName: "" },
+        { name: "Sponsor", image: "", badge: "Food sponsor", highlight: "", promoEnabled: "", promoCode: "IYINTECHFEST", bankName: "Lumibakes&Treats", accountNumber: "6586455889", accountName: "OPay" },
+        { name: "Sponsor", image: "", badge: "Food sponsor", highlight: "1", promoEnabled: "1", promoCode: "IYINTECHFEST", bankName: "Lumibakes&Treats", accountNumber: "6586455889", accountName: "OPay" },
       ],
     },
     fields: [
@@ -133,9 +133,9 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
           { key: "highlight", label: "Highlight with animated orange arrow (clickable)", kind: "checkbox" } as SubField,
           { key: "promoEnabled", label: "Enable promo flow on click (shows promo code → payment modal)", kind: "checkbox" } as SubField,
           { key: "promoCode", label: "Promo code", kind: "text", placeholder: "IYINTECHFEST" } as SubField,
-          { key: "bankName", label: "Bank name", kind: "text", placeholder: "e.g. Access Bank" } as SubField,
-          { key: "accountNumber", label: "Account number", kind: "text", placeholder: "0123456789" } as SubField,
-          { key: "accountName", label: "Account name", kind: "text", placeholder: "IYIN TECHFEST" } as SubField,
+          { key: "bankName", label: "Bank name", kind: "text", placeholder: "Lumibakes&Treats" } as SubField,
+          { key: "accountNumber", label: "Account number", kind: "text", placeholder: "6586455889" } as SubField,
+          { key: "accountName", label: "Account name", kind: "text", placeholder: "OPay" } as SubField,
         ]
       },
     ],

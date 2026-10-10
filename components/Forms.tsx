@@ -24,7 +24,7 @@ export function NewsletterForm() {
       }}
     >
       <input className="input" type="email" required placeholder="name@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <button className="btn-primary shrink-0" disabled={busy}>{busy ? "Subscribing…" : "Subscribe"}</button>
+      <button className="btn-primary shrink-0 w-full sm:w-auto" disabled={busy}>{busy ? "Subscribing…" : "Subscribe"}</button>
       {msg && <p className="text-sm text-teal sm:self-center">{msg}</p>}
     </form>
   );
@@ -52,7 +52,7 @@ export function RegisterForm() {
       <input className="input" placeholder="Phone number" value={f.phone} onChange={set("phone")} />
       <input className="input" placeholder="Team name (optional)" value={f.team_name} onChange={set("team_name")} />
       <textarea className="input" rows={3} placeholder="Team members, one per line" value={f.members} onChange={set("members")} />
-      <button className="btn-primary" disabled={busy}>{busy ? "Registering…" : "Register"}</button>
+      <button className="btn-primary w-full sm:w-auto" disabled={busy}>{busy ? "Registering…" : "Register"}</button>
       {msg && <p className="text-sm text-teal">{msg}</p>}
     </form>
   );
@@ -80,7 +80,7 @@ export function AttendeesForm() {
       <input className="input" placeholder="Phone number" value={f.phone} onChange={set("phone")} />
       <input className="input" placeholder="Team name (optional)" value={f.team_name} onChange={set("team_name")} />
       <textarea className="input" rows={3} placeholder="Team members, one per line (optional)" value={f.members} onChange={set("members")} />
-      <button className="btn-primary" disabled={busy}>{busy ? "Registering..." : "Register for event"}</button>
+      <button className="btn-primary w-full sm:w-auto" disabled={busy}>{busy ? "Registering..." : "Register for event"}</button>
       {msg && <p className="text-sm text-teal">{msg}</p>}
     </form>
   );
@@ -108,7 +108,7 @@ export function TicketForm({ name, price }: { name: string; price: number }) {
       <input className="input" required placeholder="Full name" value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} />
       <input className="input" required type="email" placeholder="Email for your receipt" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
       <input className="input" type="number" min={1} max={10} value={f.quantity} onChange={(e) => setF({ ...f, quantity: Number(e.target.value) })} />
-      <button className="btn-primary" disabled={busy}>{busy ? "Redirecting…" : `Pay ₦${(price * f.quantity).toLocaleString()}`}</button>
+      <button className="btn-primary w-full sm:w-auto" disabled={busy}>{busy ? "Redirecting…" : `Pay ₦${(price * f.quantity).toLocaleString()}`}</button>
       {msg && <p className="text-sm text-countdown">{msg}</p>}
     </form>
   );

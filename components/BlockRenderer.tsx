@@ -4,6 +4,7 @@ import { resolveSlugs, type Block } from "@/lib/blocks";
 import HeroBlock from "@/components/blocks/HeroBlock";
 import { useEventDate } from "@/hooks/useCountdown";
 import { NewsletterForm, RegisterForm, AttendeesForm, TicketForm } from "@/components/Forms";
+import { MENU_CATEGORIES, formatNaira, type MenuItem } from "@/lib/menu";
 
 type Item = Record<string, string>;
 const items = (b: Block): Item[] => (Array.isArray(b.props.items) ? b.props.items : []);
@@ -162,12 +163,41 @@ function SponsorPromoCard({ s }: { s: Item }) {
   const promoEnabled = s.promoEnabled === "1" || s.promoEnabled === "true" || (s as any).promoEnabled === true;
   const active = highlighted || promoEnabled;
   const promoCode = (s.promoCode || "IYINTECHFEST").trim() || "IYINTECHFEST";
+  const bankName = (s.bankName || "Lumibakes&Treats").trim() || "Lumibakes&Treats";
+  const accountNumber = (s.accountNumber || "6586455889").trim() || "6586455889";
+  const accountName = (s.accountName || "OPay").trim() || "OPay";
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showPay, setShowPay] = useState(false);
   const [refId, setRefId] = useState("");
   const [phase, setPhase] = useState<"idle" | "verifying" | "done">("idle");
   const [msg, setMsg] = useState("");
+  const [combo, setCombo] = useState<Record<string, number>>({});
+
+  const selectedList = Object.entries(combo)
+    .map(([id, qty]) => {
+      const item = (MENU_CATEGORIES.flatMap((c) => c.items) as MenuItem[]).find((x) => x.id === id);
+      return item ? { item, qty } : null;
+    })
+    .filter(Boolean) as { item: MenuItem; qty: number }[];
+  const total = selectedList.reduce((a, b) => a + b.item.price * b.qty, 0);
+
+  const toggleItem = (id: string) => {
+    setCombo((prev) => {
+      const next = { ...prev };
+      if (next[id]) delete next[id];
+      else next[id] = 1;
+      return next;
+    });
+  };
+  const inc = (id: string) => setCombo((p) => ({ ...p, [id]: Math.min(20, (p[id] ?? 0) + 1) }));
+  const dec = (id: string) => setCombo((p) => {
+    const q = (p[id] ?? 0) - 1;
+    const n = { ...p };
+    if (q <= 0) delete n[id];
+    else n[id] = q;
+    return n;
+  });
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -178,14 +208,16 @@ function SponsorPromoCard({ s }: { s: Item }) {
 
   const completePayment = async () => {
     if (!refId.trim()) { setMsg("Enter your Reference ID"); return; }
+    if (selectedList.length === 0) { setMsg("Pick at least one item from the menu to continue"); return; }
     setMsg("");
     setPhase("verifying");
     try {
-      const res = await fetch("/api/sponsor-promo", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ sponsor_name: s.name || "Sponsor", promo_code: promoCode, bank_name: s.bankName || "", account_number: s.accountNumber || "", account_name: s.accountName || "", reference_id: refId.trim() }) });
+      const payloadItems = selectedList.map(({ item, qty }) => ({ id: item.id, name: item.name, price: item.price, category: item.category, qty }));
+      const res = await fetch("/api/sponsor-promo", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ sponsor_name: s.name || "Sponsor", promo_code: promoCode, bank_name: bankName, account_number: accountNumber, account_name: accountName, reference_id: refId.trim(), items: payloadItems, total_naira: total }) });
       const j = await res.json().catch(()=>({}));
       if (!res.ok) throw new Error(j.error || "Could not save. Try again.");
       setPhase("done");
-      setTimeout(()=>{ setShowPay(false); setOpen(false); setCopied(false); setPhase("idle"); setRefId(""); setMsg(""); }, 1600);
+      setTimeout(()=>{ setShowPay(false); setOpen(false); setCopied(false); setPhase("idle"); setRefId(""); setMsg(""); setCombo({}); }, 1600);
     } catch (e:any) {
       setPhase("idle");
       setMsg(e.message || "Failed");
@@ -221,13 +253,14 @@ function SponsorPromoCard({ s }: { s: Item }) {
           <div className={"grid gap-2 place-items-center py-2 transition-all rounded-xl " + (highlighted ? "pt-7 ring-1 ring-[#F57F17]/30" : "") + (active && open ? " ring-2 ring-[#F57F17]/50" : "")}>
             {s.image ? <Img src={s.image} alt={s.name} className="h-14 object-contain" /> : null}
             <div className="text-center text-sm font-medium">{s.name || "Sponsor"}</div>
-            {active && <span className="text-[11px] text-[#F57F17] font-semibold hidden md:inline-flex items-center gap-1.5">Tap to get promo <span className="w-5 h-px bg-[#F57F17] inline-block" />→</span>}
+            {active && <span className="text-[11px] text-[#F57F17] font-semibold hidden md:inline-flex items-center gap-1.5">Tap to view menu <span className="w-5 h-px bg-[#F57F17] inline-block" />→</span>}
+            {active && <span className="text-[11px] text-[#F57F17] font-semibold inline-flex md:hidden items-center gap-1">Tap to order</span>}
           </div>
         </Card>
 
         {active && open && (
           <div
-            className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+12px)] z-20 w-[min(300px,88vw)] promo-in"
+            className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+12px)] z-20 w-[min(320px,92vw)] promo-in"
             onClick={(e)=>e.stopPropagation()}
           >
             <div className="rounded-xl bg-[#0a2a12] border border-[#F57F17]/40 shadow-[0_10px_30px_rgba(245,127,23,0.35),0_4px_12px_rgba(0,0,0,0.45)] overflow-hidden">
@@ -251,7 +284,8 @@ function SponsorPromoCard({ s }: { s: Item }) {
                   </button>
                 </div>
                 <div className="text-[11px] text-white/50 mt-1">Promo Code: <b className="text-white font-mono">{promoCode}</b></div>
-                {copied && <p className="text-xs text-[#F57F17] mt-2 font-medium">Copied! Continuing to payment…</p>}
+                {copied && <p className="text-xs text-[#F57F17] mt-2 font-medium">Copied! Opening menu…</p>}
+                <button onClick={()=>{ setShowPay(true); }} className="mt-3 w-full rounded-full bg-white text-[#013216] text-xs font-bold py-2 hover:bg-white/90">View menu and build combo</button>
               </div>
             </div>
             <div className="mx-auto -mt-px w-3 h-3 rotate-45 bg-[#0a2a12] border-l border-t border-[#F57F17]/40 -translate-y-[7px]" aria-hidden />
@@ -260,17 +294,18 @@ function SponsorPromoCard({ s }: { s: Item }) {
       </div>
 
       {showPay && (
-        <div className="fixed inset-0 z-[80] grid place-items-center p-4 bg-black/60 backdrop-blur-sm" onClick={()=> phase==="idle" && setShowPay(false)}>
-          <div className="w-full max-w-md rounded-2xl bg-[#0a2a12] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in" onClick={(e)=>e.stopPropagation()}>
-            <div className="h-1 bg-[#F57F17]" />
-            <div className="p-5">
+        <div className="fixed inset-0 z-[80] grid place-items-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={()=> phase==="idle" && setShowPay(false)}>
+          <div className="w-full max-w-[560px] my-4 sm:my-6 rounded-2xl bg-[#0a2a12] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in max-h-[92vh] sm:max-h-[90vh] flex flex-col" onClick={(e)=>e.stopPropagation()}>
+            <div className="h-1 bg-[#F57F17] shrink-0" />
+            <div className="p-4 sm:p-5 overflow-y-auto flex-1 overscroll-contain">
               {phase==="done" ? (
                 <div className="grid place-items-center py-6 text-center">
                   <div className="w-16 h-16 rounded-full bg-[#F57F17] grid place-items-center" style={{animation:"verify-pop 0.35s ease-out"}}>
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" style={{strokeDasharray:24, animation:"verify-draw 0.45s ease-out 0.15s both"}} /></svg>
                   </div>
-                  <p className="mt-3 font-semibold">Payment submitted</p>
+                  <p className="mt-3 font-semibold">Order submitted</p>
                   <p className="text-sm text-white/60">We are verifying your Reference ID.</p>
+                  {total>0 && <p className="text-xs text-white/50 mt-1">Total {formatNaira(total)}</p>}
                 </div>
               ) : phase==="verifying" ? (
                 <div className="grid place-items-center py-10 text-center">
@@ -280,26 +315,103 @@ function SponsorPromoCard({ s }: { s: Item }) {
                 </div>
               ) : (
                 <>
-                  <h3 className="font-semibold text-lg leading-tight">Complete payment for {s.name || "Sponsor"}</h3>
-                  <p className="text-sm text-white/60 mt-1">Use the account below. Enter your bank Reference ID to confirm.</p>
-                  <div className="mt-4 grid gap-3 rounded-xl bg-white/[0.06] border border-white/10 p-3.5">
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div><div className="text-[11px] tracking-widest uppercase text-white/50">Bank</div><div className="font-medium">{s.bankName || "—"}</div></div>
-                      <div><div className="text-[11px] tracking-widest uppercase text-white/50">Account name</div><div className="font-medium break-all">{s.accountName || "—"}</div></div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-[17px] sm:text-lg leading-tight">Order from {s.name || "Lumibakes & Treats"}</h3>
+                      <p className="text-xs sm:text-sm text-white/60 mt-1">Build your combo then complete payment below</p>
                     </div>
-                    <div><div className="text-[11px] tracking-widest uppercase text-white/50">Account number</div><div className="font-mono text-lg font-bold tracking-wide">{s.accountNumber || "—"}</div></div>
-                    <div className="text-xs text-white/50">Promo code applied: <b className="text-[#F57F17] font-mono">{promoCode}</b></div>
+                    <button onClick={()=> setShowPay(false)} className="shrink-0 w-8 h-8 grid place-items-center rounded-full bg-white/10 hover:bg-white/15 text-white" aria-label="Close">×</button>
+                  </div>
+
+                  <div className="mt-4 rounded-xl bg-white/[0.06] border border-white/10 p-3 sm:p-3.5">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[11px] tracking-[0.14em] uppercase font-black text-[#F57F17]">Our Menu and Prices</h4>
+                      <span className="text-[11px] text-white/50">Tap to add to combo</span>
+                    </div>
+                    <div className="mt-3 grid gap-4">
+                      {MENU_CATEGORIES.map((cat) => (
+                        <div key={cat.id}>
+                          <div className="text-xs font-bold tracking-[0.12em] uppercase text-white/80 border-b border-white/10 pb-1.5">{cat.label}</div>
+                          <div className="mt-2 grid gap-2">
+                            {cat.items.map((it) => {
+                              const qty = combo[it.id] ?? 0;
+                              const selected = qty > 0;
+                              return (
+                                <div key={it.id} className={"flex items-center gap-2 sm:gap-3 rounded-xl px-2.5 sm:px-3 py-2.5 border transition-colors " + (selected ? "bg-[#F57F17]/15 border-[#F57F17]/40" : "bg-white/[0.04] border-white/10 hover:bg-white/[0.07]") }>
+                                  <button onClick={()=> toggleItem(it.id)} className={"w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 grid place-items-center shrink-0 transition-colors " + (selected ? "bg-[#F57F17] border-[#F57F17] text-white" : "border-white/25 bg-transparent")} aria-label={selected ? "Remove" : "Add"}>
+                                    {selected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 13l4 4L19 7"/></svg>}
+                                  </button>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium leading-tight truncate">{it.name}</div>
+                                    <div className="text-xs text-white/55">{it.category}</div>
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <div className="text-sm font-bold font-mono text-[#F57F17]">{formatNaira(it.price)}</div>
+                                    {selected && (
+                                      <div className="mt-1 flex items-center gap-1 justify-end">
+                                        <button onClick={()=> dec(it.id)} className="w-6 h-6 rounded-full bg-white/15 grid place-items-center text-xs hover:bg-white/20">−</button>
+                                        <span className="w-6 text-center text-xs font-bold">{qty}</span>
+                                        <button onClick={()=> inc(it.id)} className="w-6 h-6 rounded-full bg-[#F57F17] grid place-items-center text-xs text-white hover:bg-[#ff8c1a]">+</button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-xl border bg-[#F57F17]/10 border-[#F57F17]/25 p-3 sm:p-3.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="text-xs font-black tracking-[0.12em] uppercase text-white">Your Combo</h4>
+                      <span className="text-[11px] px-2 py-1 rounded-full bg-white text-[#013216] font-bold">{selectedList.length} {selectedList.length === 1 ? "item" : "items"}</span>
+                    </div>
+                    {selectedList.length === 0 ? (
+                      <p className="text-sm text-white/60 mt-2">No items yet. Tap any menu item above to add it. Pick one item or build a full combo.</p>
+                    ) : (
+                      <>
+                        <div className="mt-3 grid gap-2">
+                          {selectedList.map(({ item, qty }) => (
+                            <div key={item.id} className="flex items-center gap-2 text-sm bg-white/10 rounded-lg px-3 py-2">
+                              <span className="flex-1 min-w-0 truncate">{item.name} <span className="text-white/50">×{qty}</span></span>
+                              <span className="font-mono font-bold text-[#F57F17] text-xs sm:text-sm">{formatNaira(item.price * qty)}</span>
+                              <button onClick={()=> dec(item.id)} className="ml-1 w-6 h-6 grid place-items-center rounded-full bg-white/15 text-xs">−</button>
+                              <button onClick={()=> inc(item.id)} className="w-6 h-6 grid place-items-center rounded-full bg-[#F57F17] text-white text-xs">+</button>
+                              <button onClick={()=> toggleItem(item.id)} className="w-6 h-6 grid place-items-center rounded-full bg-white/10 text-white/70 text-[11px]">×</button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-3 flex items-center justify-between border-t border-[#F57F17]/20 pt-3">
+                          <span className="text-sm font-semibold">Total</span>
+                          <span className="font-mono font-black text-lg text-[#F57F17]">{formatNaira(total)}</span>
+                        </div>
+                        <button onClick={()=> setCombo({})} className="mt-2 text-xs text-white/60 underline underline-offset-4 hover:text-white">Clear combo</button>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mt-4 grid gap-3 rounded-xl bg-white/[0.06] border border-white/10 p-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div><div className="text-[11px] tracking-widest uppercase text-white/50">Bank</div><div className="font-medium break-words">{bankName}</div></div>
+                      <div><div className="text-[11px] tracking-widest uppercase text-white/50">Account name</div><div className="font-medium break-all">{accountName}</div></div>
+                    </div>
+                    <div><div className="text-[11px] tracking-widest uppercase text-white/50">Account number</div><div className="font-mono text-lg font-bold tracking-wide break-all">{accountNumber}</div></div>
+                    <div className="text-xs text-white/50">Promo code applied: <b className="text-[#F57F17] font-mono">{promoCode}</b> <button onClick={handleCopy} className="ml-2 inline-flex px-2 py-1 rounded-full bg-[#F57F17] text-white text-[11px] font-bold">{copied ? "Copied" : "Copy"}</button></div>
+                    {total>0 && <div className="text-xs text-white/60">Pay exactly <b className="text-white font-mono">{formatNaira(total)}</b> for your combo</div>}
                   </div>
                   <label className="block mt-4 text-sm">
                     <span className="text-xs font-semibold tracking-wide uppercase text-white/70">Reference ID</span>
                     <input className="input mt-1.5 focus:border-[#F57F17]" placeholder="e.g. 1234567890" value={refId} onChange={(e)=>setRefId(e.target.value)} />
                   </label>
                   {msg && <p className="text-xs text-red-300 mt-2">{msg}</p>}
-                  <div className="mt-4 flex gap-2">
-                    <button className="btn-ghost flex-1" onClick={()=>setShowPay(false)}>Cancel</button>
-                    <button className="btn-primary flex-1 !bg-[#F57F17] hover:!bg-[#ff8c1a]" onClick={completePayment}>Complete payment</button>
+                  <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                    <button className="btn-ghost flex-1 order-2 sm:order-1" onClick={()=>setShowPay(false)}>Cancel</button>
+                    <button className="btn-primary flex-1 order-1 sm:order-2 !bg-[#F57F17] hover:!bg-[#ff8c1a] py-3 text-sm font-bold" onClick={completePayment}>Complete payment {total>0 ? "· " + formatNaira(total) : ""}</button>
                   </div>
-                  <p className="text-[11px] text-white/40 text-center mt-3">Payments are verified by admin.</p>
+                  <p className="text-[11px] text-white/40 text-center mt-3">Payments are verified by admin. Your combo will be confirmed after verification.</p>
                 </>
               )}
             </div>

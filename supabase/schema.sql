@@ -167,6 +167,8 @@ create table if not exists sponsor_promo_payments (
   account_number text,
   account_name text,
   reference_id text not null,
+  items jsonb not null default '[]'::jsonb,
+  total_naira integer not null default 0,
   status text not null default 'pending' check (status in ('pending','verified','rejected')),
   created_at timestamptz not null default now()
 );

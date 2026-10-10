@@ -428,44 +428,82 @@ export function SponsorPromoPanel() {
     if (!res.ok) setMsg(j.error || "Failed");
     else { setMsg("Updated"); load(); }
   };
+  const formatNaira = (n:number) => "\u20A6" + Number(n||0).toLocaleString("en-NG");
   const csv = () => {
-    const head = ["sponsor_name","promo_code","reference_id","status","bank_name","account_number","account_name","created_at"];
+    const head = ["sponsor_name","promo_code","reference_id","status","items","total_naira","bank_name","account_number","account_name","created_at"];
     const esc=(v:any)=>'"'+String(v??"").replace(/"/g,'""')+'"';
-    const out=[head.join(","), ...rows.map((r:any)=> head.map((h)=> esc(r[h])).join(","))].join("\n");
+    const out=[head.join(","), ...rows.map((r:any)=> head.map((h)=> h==="items" ? esc(JSON.stringify(r[h]??[])) : esc(r[h])).join(","))].join("\n");
     const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([out],{type:"text/csv"})); a.download="sponsor_promo_payments.csv"; a.click();
   };
   const pending = rows.filter((r:any)=> r.status==="pending").length;
   return (
-    <div className="glass p-4 grid gap-3">
+    <div className="glass p-3 sm:p-4 grid gap-3 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-semibold">Sponsor promo payments {pending ? <span className="ml-2 px-2 py-0.5 rounded-full bg-[#F57F17] text-black text-xs">{pending} pending</span> : null}</h2>
+        <h2 className="font-semibold text-sm sm:text-base">Sponsor orders {pending ? <span className="ml-2 px-2 py-0.5 rounded-full bg-[#F57F17] text-black text-xs">{pending} pending</span> : null}</h2>
         <div className="flex gap-2">
-          <button className="btn-ghost !py-1 text-sm" onClick={load}>Refresh</button>
-          <button className="btn-ghost !py-1 text-sm" onClick={csv}>Download CSV</button>
+          <button className="btn-ghost !py-1 !px-3 text-xs sm:text-sm" onClick={load}>Refresh</button>
+          <button className="btn-ghost !py-1 !px-3 text-xs sm:text-sm" onClick={csv}>Download CSV</button>
         </div>
       </div>
-      <p className="text-xs text-muted">Reference IDs submitted from the orange promo flow (click highlighted sponsor → copy promo code → Reference ID → Complete payment).</p>
+      <p className="text-xs text-muted">Orders from the sponsor food menu. Customer picks items to build a combo then pays to 6586455889 OPay Lumibakes&Treats and submits Reference ID.</p>
       {msg && <p className="text-xs text-teal">{msg}</p>}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[52rem]">
-          <thead><tr className="text-left text-muted"><th className="py-1">When</th><th>Sponsor</th><th>Promo</th><th>Reference ID</th><th>Bank</th><th>Account</th><th>Status</th><th></th></tr></thead>
+
+      {/* Mobile cards */}
+      <div className="grid gap-3 md:hidden">
+        {!rows.length && <div className="py-8 text-center text-muted text-sm border border-dashed border-white/15 rounded-xl">No orders yet. Highlight a sponsor in Page builder then test the menu flow on the site.</div>}
+        {rows.map((r:any)=> {
+          const items: any[] = Array.isArray(r.items) ? r.items : [];
+          return (
+          <div key={r.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-3 grid gap-2">
+            <div className="flex justify-between gap-2">
+              <span className="font-medium text-sm">{r.sponsor_name}</span>
+              <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs h-fit ${r.status==="verified"?"bg-[#F57F17] text-black": r.status==="rejected"?"bg-white text-black":"bg-white/15 text-white border border-white/15"}`}>{r.status}</span>
+            </div>
+            <div className="text-xs font-mono"><span className="text-muted">Ref</span> <b>{r.reference_id}</b> <span className="text-[#F57F17]">{r.promo_code}</span></div>
+            {items.length ? (
+              <div className="rounded-lg bg-black/20 border border-white/10 p-2">
+                <div className="text-[11px] tracking-widest uppercase text-white/60 font-bold">Combo</div>
+                <div className="mt-1 grid gap-1">
+                  {items.map((it:any, i:number)=> (
+                    <div key={i} className="flex justify-between text-xs"><span className="truncate pr-2">{it.name} ×{it.qty ?? 1}</span><span className="font-mono text-[#F57F17] shrink-0">{formatNaira((it.price||0)*(it.qty??1))}</span></div>
+                  ))}
+                </div>
+                <div className="mt-2 pt-2 border-t border-white/10 flex justify-between text-xs font-bold"><span>Total</span><span className="font-mono text-[#F57F17]">{formatNaira(r.total_naira||0)}</span></div>
+              </div>
+            ) : <div className="text-xs text-muted">No items recorded</div>}
+            <div className="text-xs text-muted font-mono">{r.bank_name || "Lumibakes&Treats"} · {r.account_number || "6586455889"} {r.account_name || "OPay"}</div>
+            <div className="text-[11px] text-muted">{new Date(r.created_at).toLocaleString()}</div>
+            <div className="flex gap-2">
+              <button className="flex-1 py-2 rounded-full bg-[#F57F17] text-black text-xs font-bold disabled:opacity-40" disabled={r.status==="verified"} onClick={()=>patch(r.id,"verified")}>Verify</button>
+              <button className="flex-1 py-2 rounded-full bg-white/10 text-xs disabled:opacity-40" disabled={r.status==="rejected"} onClick={()=>patch(r.id,"rejected")}>Reject</button>
+            </div>
+          </div>
+        )})}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block overflow-x-auto -mx-1">
+        <table className="w-full text-sm min-w-[58rem]">
+          <thead><tr className="text-left text-muted text-xs"><th className="py-1">When</th><th>Sponsor</th><th>Ref</th><th>Combo</th><th>Total</th><th>Account</th><th>Status</th><th></th></tr></thead>
           <tbody>
-            {rows.map((r:any)=> (
-              <tr key={r.id} className="border-t border-white/10">
-                <td className="py-2 text-xs text-muted">{new Date(r.created_at).toLocaleString()}</td>
-                <td className="text-xs font-medium">{r.sponsor_name}</td>
-                <td className="font-mono text-xs text-[#F57F17]">{r.promo_code}</td>
-                <td className="font-mono text-xs font-bold">{r.reference_id}</td>
-                <td className="text-xs">{r.bank_name || "—"}</td>
-                <td className="text-xs"><span className="font-mono">{r.account_number || "—"}</span><span className="text-muted"> {r.account_name || ""}</span></td>
-                <td><span className={`px-2 py-0.5 rounded-full text-xs ${r.status==="verified"?"bg-[#F57F17] text-black": r.status==="rejected"?"bg-white text-black":"bg-white/15 text-white border border-white/15"}`}>{r.status}</span></td>
+            {rows.map((r:any)=> {
+              const items: any[] = Array.isArray(r.items) ? r.items : [];
+              return (
+              <tr key={r.id} className="border-t border-white/10 align-top">
+                <td className="py-2 text-xs text-muted whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
+                <td className="text-xs font-medium max-w-[9rem] truncate">{r.sponsor_name}</td>
+                <td><div className="font-mono text-xs font-bold">{r.reference_id}</div><div className="font-mono text-[11px] text-[#F57F17]">{r.promo_code}</div></td>
+                <td className="text-xs max-w-[18rem]">{items.length ? items.map((it:any)=> `${it.name} ×${it.qty??1}`).join(" · ") : <span className="text-muted">no items</span>}</td>
+                <td className="font-mono text-xs font-bold text-[#F57F17] whitespace-nowrap">{r.total_naira ? formatNaira(r.total_naira) : "—"}</td>
+                <td className="text-xs"><span className="font-mono">{r.account_number || "—"}</span><div className="text-muted text-[11px]">{r.bank_name || ""} {r.account_name || ""}</div></td>
+                <td><span className={`px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${r.status==="verified"?"bg-[#F57F17] text-black": r.status==="rejected"?"bg-white text-black":"bg-white/15 text-white border border-white/15"}`}>{r.status}</span></td>
                 <td className="flex gap-1 py-1">
-                  <button className="px-2 py-1 rounded-full bg-[#F57F17] text-black text-xs disabled:opacity-40" disabled={r.status==="verified"} onClick={()=>patch(r.id,"verified")}>Verify</button>
+                  <button className="px-2 py-1 rounded-full bg-[#F57F17] text-black text-xs disabled:opacity-40 whitespace-nowrap" disabled={r.status==="verified"} onClick={()=>patch(r.id,"verified")}>Verify</button>
                   <button className="px-2 py-1 rounded-full bg-white/10 text-xs disabled:opacity-40" disabled={r.status==="rejected"} onClick={()=>patch(r.id,"rejected")}>Reject</button>
                 </td>
               </tr>
-            ))}
-            {!rows.length && <tr><td colSpan={8} className="py-8 text-center text-muted text-sm">No payments yet. Highlight a sponsor in Page builder (orange arrow + promo fields), publish, then test the flow on the site.</td></tr>}
+            )})}
+            {!rows.length && <tr><td colSpan={8} className="py-8 text-center text-muted text-sm">No orders yet.</td></tr>}
           </tbody>
         </table>
       </div>
