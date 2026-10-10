@@ -8,7 +8,6 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: { default: SITE.fullName, template: `%s | ${SITE.name}` },
   description: SITE.tagline,
-  icons: { icon: SITE.logo },
   openGraph: { title: SITE.fullName, description: SITE.tagline, images: [SITE.logo] },
 };
 
