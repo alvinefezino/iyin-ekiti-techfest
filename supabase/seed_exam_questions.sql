@@ -1,5 +1,23 @@
 -- Replace exam_questions with the new 50 question set
 -- Run this in Supabase SQL Editor. It removes the old 50 and inserts the new 50.
+-- Ensure table exists (schema.sql may not have been run on this project yet — this makes the seed idempotent)
+-- Prereqs for RLS policy (is_admin)
+create extension if not exists pgcrypto;
+create table if not exists admins (user_id uuid primary key references auth.users(id) on delete cascade);
+create or replace function is_admin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from admins where user_id = auth.uid());
+$$;
+create table if not exists exam_questions (
+  id int primary key,
+  question text not null,
+  options jsonb not null,
+  answer int not null
+);
+-- Re-apply RLS so a fresh table is admin-only (harmless if already enabled)
+alter table exam_questions enable row level security;
+drop policy if exists "admin_exam_questions" on exam_questions;
+create policy "admin_exam_questions" on exam_questions for all using (is_admin()) with check (is_admin());
 delete from exam_questions;
 insert into exam_questions (id, question, options, answer) values
 (1, 'What is the primary purpose of a variable in programming?', '["To repeat a program","To store and reference data","To delete files","To compile code"]', 1),
