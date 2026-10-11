@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   // AI-handled automation: branded hackathon welcome (white logo header) - fire and forget so registration never hangs on SMTP
   const html = hackathonEmailHtml(d.full_name);
-  sendEmail(email, `You are registered for the Iyin Ekiti TechFest hackathon`, html).catch((e) => console.error("[register] mail failed", e));
+  sendEmail(email, `Congratulations! You've Qualified for the Iyin-Ekiti Tech Fest 2026 Hackathon Stage`, html).catch((e) => console.error("[register] mail failed", e));
 
   return NextResponse.json({ ok: true });
 }

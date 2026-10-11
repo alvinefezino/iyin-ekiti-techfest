@@ -94,7 +94,7 @@ export default function TeamPage() {
 
         <div className="glass-strong mt-4 rounded-2xl p-4 sm:p-6">
           <h1 className="text-xl font-semibold leading-tight sm:text-2xl">Registration team - directory</h1>
-          <p className="mt-1 text-sm text-muted">Search hackers and attendees by name, email or learning interest. For check-in only - exam results are managed by admins.</p>
+          <p className="mt-1 text-sm text-muted">Search hackers and attendees by name, email or learning interest.</p>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email or what they want to learn…" className="input min-w-[16rem] flex-1" />
@@ -185,7 +185,7 @@ export default function TeamPage() {
           )}
 
           {!needCode && (
-            <p className="mt-4 text-[11px] leading-relaxed text-muted">Directory refreshes on every search. Keep your team code private. Exam pass/fail is visible only in Admin → Exam panel.</p>
+            <p className="mt-4 text-[11px] leading-relaxed text-muted">Directory refreshes on every search. Keep your team code private.</p>
           )}
         </div>
       </div>
