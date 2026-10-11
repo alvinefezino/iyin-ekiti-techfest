@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { limited } from "@/lib/rate";
+import { limited, getClientIp } from "@/lib/rate";
 
 const itemSchema = z.object({
   id: z.string().max(80),
@@ -23,8 +23,8 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "anon";
-  if (limited(`sponsor-promo:${ip}`, 12)) return NextResponse.json({ error: "Too many attempts. Try again." }, { status: 429 });
+  const ip = getClientIp(req);
+  if (await limited(`sponsor-promo:${ip}`, 12, 60_000)) return NextResponse.json({ error: "Too many attempts. Try again." }, { status: 429 });
   const parsed = schema.safeParse(await req.json().catch(()=>({})));
   if (!parsed.success) return NextResponse.json({ error: "Check your details and try again." }, { status: 400 });
   const d = parsed.data;
@@ -38,6 +38,11 @@ export async function POST(req: NextRequest) {
     items: d.items,
     total_naira: d.total_naira,
   });
-  if (error) return NextResponse.json({ error: "Could not save. Try again." }, { status: 500 });
+  if (error) {
+    if (String(error.message).toLowerCase().includes("duplicate") || String((error as any).code) === "23505") {
+      return NextResponse.json({ ok: true, already: true });
+    }
+    return NextResponse.json({ error: "Could not save. Try again." }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

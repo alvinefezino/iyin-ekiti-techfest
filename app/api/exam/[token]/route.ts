@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { EXAM_QUESTIONS } from "@/lib/examQuestions";
+import { limited, getClientIp } from "@/lib/rate";
 
 function seededShuffle<T>(arr: T[], seedStr: string): T[] {
   let h = 2166136261;
@@ -12,14 +13,16 @@ function seededShuffle<T>(arr: T[], seedStr: string): T[] {
   return a;
 }
 
-export async function GET(_: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  const ip = getClientIp(req);
+  if (await limited(`exam:token:${ip}`, 30, 60_000)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const { token } = await params;
+  if (!/^[0-9a-f-]{36}$/i.test(token)) return NextResponse.json({ error: "Invalid link" }, { status: 404 });
   const sb = supabaseAdmin();
   const { data: invite } = await sb.from("exam_invites").select("id,email,status,expires_at,score,disqualified_reason").eq("token", token).maybeSingle();
   if (!invite) return NextResponse.json({ error: "Invalid link" }, { status: 404 });
   if (invite.expires_at && new Date(invite.expires_at) < new Date()) return NextResponse.json({ error: "Link expired", invite }, { status: 410 });
   const publicQs = EXAM_QUESTIONS.map(({ answer, ...q }) => q);
-  // also try DB
   const { data: dbQs } = await sb.from("exam_questions").select("id,question,options").order("id");
   const base = dbQs && dbQs.length === 50 ? dbQs.map((q: any) => ({ id: q.id, question: q.question, options: q.options })) : publicQs;
   const questions = seededShuffle(base, token);

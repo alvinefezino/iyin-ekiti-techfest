@@ -4,8 +4,8 @@ import { supabaseAdmin, requireAdmin } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 // Team directory: hackers + attendees - check-in only. No exam pass/fail here (admin panel only).
-// Auth: allowed if (a) valid admin session OR (b) correct x-team-code header / ?code= when TEAM_CODE is set
-// If TEAM_CODE is not set, admin session is required.
+// Auth: allowed if (a) valid admin session OR (b) correct x-team-code via header or POST body when TEAM_CODE is set
+// If TEAM_CODE is not set, admin session is required. The former ?code= URL param is intentionally not supported (log leak).
 
 async function authorized(req: NextRequest) {
   const admin = await requireAdmin();
@@ -13,15 +13,15 @@ async function authorized(req: NextRequest) {
   const teamCode = process.env.TEAM_CODE?.trim();
   if (!teamCode) return false;
   const headerCode = req.headers.get("x-team-code")?.trim() || "";
-  const urlCode = req.nextUrl.searchParams.get("code")?.trim() || "";
-  let bodyCode = "";
+  if (headerCode === teamCode) return true;
   if (req.method === "POST") {
     try {
-      const j = await req.clone().json();
-      bodyCode = String((j as any)?.code || "").trim();
+      const j = await req.json();
+      const bodyCode = String((j as any)?.code || "").trim();
+      if (bodyCode === teamCode) return true;
     } catch {}
   }
-  return headerCode === teamCode || urlCode === teamCode || bodyCode === teamCode;
+  return false;
 }
 
 export async function GET(req: NextRequest) {

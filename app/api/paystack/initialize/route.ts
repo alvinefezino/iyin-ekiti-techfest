@@ -3,13 +3,13 @@ import { z } from "zod";
 import { randomBytes } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
-import { limited } from "@/lib/rate";
+import { limited, getClientIp } from "@/lib/rate";
 
 const schema = z.object({ full_name: z.string().min(2).max(120), email: z.string().email(), quantity: z.number().int().min(1).max(10) });
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "anon";
-  if (limited(`pay:${ip}`, 8)) return NextResponse.json({ error: "Too many attempts." }, { status: 429 });
+  const ip = getClientIp(req);
+  if (await limited(`pay:${ip}`, 8)) return NextResponse.json({ error: "Too many attempts." }, { status: 429 });
   const parsed = schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Check your details." }, { status: 400 });
   const sb = supabaseAdmin();

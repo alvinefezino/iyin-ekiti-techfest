@@ -1,17 +1,25 @@
 import { NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { SITE } from "@/lib/site";
-import { limited } from "@/lib/rate";
+import { limited, getClientIp } from "@/lib/rate";
 
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "anon";
-  if (limited(`chat:${ip}`)) return new Response("Too many requests", { status: 429 });
-  if (!process.env.GROQ_API_KEY) return new Response("GROQ_API_KEY missing", { status: 500 });
+  const ip = getClientIp(req);
+  if (await limited(`chat:${ip}`, 20, 60_000)) return new Response("Too many requests", { status: 429 });
+  if (!process.env.GROQ_API_KEY) return new Response("Service unavailable", { status: 500 });
 
-  const { messages } = await req.json();
+  let body: unknown;
+  try { body = await req.json(); } catch { return new Response("Bad request", { status: 400 }); }
+  const messages = (body as any)?.messages;
   if (!Array.isArray(messages)) return new Response("Bad request", { status: 400 });
+  if (messages.length > 20) return new Response("Too many messages", { status: 400 });
+  for (const m of messages) {
+    if (!m || typeof m.content !== "string" || typeof m.role !== "string") return new Response("Bad request", { status: 400 });
+    if (m.content.length > 4000) return new Response("Message too long", { status: 400 });
+    if (m.role !== "user" && m.role !== "assistant" && m.role !== "system") return new Response("Bad request", { status: 400 });
+  }
 
   const sb = supabaseAdmin();
   const { data } = await sb.from("settings").select("key,value").in("key", ["chatbot_knowledge", "event_date"]);
@@ -65,7 +73,7 @@ ${knowledge}`;
       lastStatus = r.status;
       lastText = await r.text().catch(() => "");
       const notFound = r.status === 404 && /model/i.test(lastText);
-      console.error(`[chat] groq error ${r.status} model=${model}`, lastText.slice(0, 800));
+      console.error(`[chat] groq error ${r.status} model=${model}`, lastText.slice(0, 400));
       if (!notFound) break;
     } catch (e) {
       console.error(`[chat] fetch failed model=${model}`, e);
@@ -75,11 +83,13 @@ ${knowledge}`;
     }
   }
   if (!upstream) {
-    return new Response(`Upstream error ${lastStatus} ${lastText.slice(0, 400)}`, { status: 502 });
+    // Do not leak upstream body detail to client
+    console.error(`[chat] upstream failed ${lastStatus}`, lastText.slice(0, 400));
+    return new Response("Upstream error. Please try again.", { status: 502 });
   }
   if (!upstream.body) {
     console.error("[chat] groq no body");
-    return new Response("Upstream error: no body", { status: 502 });
+    return new Response("Upstream error. Please try again.", { status: 502 });
   }
 
   const enc = new TextEncoder();
@@ -109,7 +119,6 @@ ${knowledge}`;
                 .replace(/^#+\s*/gm, "")
                 .replace(/^\s*\*\s+/gm, "• ")
                 .replace(/\*([^\n*]+)\*/g, "$1");
-              // final strip of any remaining stray * on this chunk
               delta = delta.replace(/\*/g, "");
               controller.enqueue(enc.encode(delta));
             }

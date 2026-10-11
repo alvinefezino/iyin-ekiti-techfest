@@ -121,6 +121,10 @@ export async function sendEmail(
 // Uses absolute URL so every client renders the logo. Falls back to text if image blocked.
 const logoUrl = `${SITE.url}/logo-white.jpg`;
 
+export function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 export const shell = (inner: string) => `
 <div style="background:#013216;padding:24px;font-family:Arial,sans-serif;color:#FFFFFF">
   <div style="max-width:560px;margin:0 auto;background:#013216;border:1px solid #F57F17;border-radius:16px;overflow:hidden">
@@ -138,7 +142,7 @@ export const shell = (inner: string) => `
 
 // Branded helpers - use these so every mail has the white logo header automatically
 export function welcomeEmailHtml(name: string) {
-  const safe = name.replace(/[<>]/g, "");
+  const safe = escapeHtml(name);
   return shell(`
     <p style="margin:0 0 12px;font-size:15px">Hi ${safe},</p>
     <p style="margin:0 0 12px;line-height:1.6">Welcome to <strong>Iyin Ekiti TechFest 2026</strong> - we are excited to have you join us. Your event attendee registration is confirmed.</p>
@@ -153,7 +157,7 @@ export function welcomeEmailHtml(name: string) {
 }
 
 export function hackathonEmailHtml(name: string) {
-  const safe = name.replace(/[<>]/g, "");
+  const safe = escapeHtml(name);
   return shell(`
     <p style="margin:0 0 12px;font-size:15px">Hi ${safe},</p>
     <p style="margin:0 0 12px;line-height:1.6">Your <strong>hackathon registration</strong> for Iyin Ekiti TechFest 2026 is confirmed. We have saved your team details and will send next steps soon.</p>

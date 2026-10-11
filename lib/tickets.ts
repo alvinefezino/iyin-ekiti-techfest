@@ -27,7 +27,7 @@ export async function fulfillOrder(reference: string) {
 
   const qrs = codes.map((c) => `<div style="margin:16px 0;text-align:center"><img src="${SITE.url}/api/qr/${c}" width="180" height="180" alt="QR ${c}" style="background:#fff;padding:8px;border-radius:12px"/><div style="font-family:monospace;margin-top:6px">${c}</div></div>`).join("");
   await sendEmail(order.email, `Your Iyin Ekiti TechFest ticket${codes.length > 1 ? "s" : ""}`, shell(`
-    <p>Hi ${String(order.full_name).replace(/[<>]/g, "")}, your payment of ₦${(order.amount_kobo / 100).toLocaleString()} was received.</p>
+    <p>Hi ${String(order.full_name).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}, your payment of ₦${(order.amount_kobo / 100).toLocaleString()} was received.</p>
     <p>Show the QR code at the entrance:</p>${qrs}
     <p style="font-size:12px;color:#8fb5a5">Reference: ${reference}</p>`));
   return { ok: true, email: order.email };

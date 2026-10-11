@@ -335,20 +335,20 @@ function SponsorPromoCard({ s }: { s: Item }) {
 
       {/* First modal - promo code only */}
       {active && showPromo && (
-        <div className="fixed inset-0 z-[80] grid place-items-center p-4 bg-black/60 backdrop-blur-sm" onClick={()=> setShowPromo(false)}>
-          <div className="w-full max-w-[360px] rounded-2xl bg-[#0a2a12] border border-[#F57F17]/40 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in flex flex-col" onClick={(e)=>e.stopPropagation()}>
+        <div className="fixed inset-0 z-[80] flex items-start sm:items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto pt-[max(12px,env(safe-area-inset-top))]" onClick={()=> setShowPromo(false)}>
+          <div className="w-full max-w-[calc(100vw-24px)] sm:max-w-[360px] my-4 rounded-2xl bg-[#0a2a12] border border-[#F57F17]/40 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in flex flex-col" onClick={(e)=>e.stopPropagation()}>
             <div className="h-1 bg-[#F57F17] shrink-0" />
             <div className="p-5 text-center">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs tracking-[0.14em] uppercase font-black text-white/60">Promo Code</h3>
-                <button onClick={()=> setShowPromo(false)} className="w-7 h-7 grid place-items-center rounded-full bg-white/10 hover:bg-white/15 text-white text-sm" aria-label="Close">×</button>
+                <button onClick={()=> setShowPromo(false)} className="w-11 h-11 min-w-[44px] min-h-[44px] grid place-items-center rounded-full bg-white/10 hover:bg-white/15 active:bg-white/20 text-white cursor-pointer touch-manipulation text-lg leading-none" aria-label="Close promo">×</button>
               </div>
               <div className="mt-4 rounded-xl bg-white/[0.07] border border-white/10 px-4 py-4">
                 <div className="font-mono font-black text-xl tracking-widest text-[#F57F17] break-all">{promoCode}</div>
               </div>
               <button
                 onClick={handleCopyPromo}
-                className={"mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full text-sm font-bold transition-colors " + (copiedPromo ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white hover:bg-[#ff8c1a]")}
+                className={"mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 min-h-[44px] rounded-full text-sm font-bold transition-colors cursor-pointer touch-manipulation " + (copiedPromo ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white hover:bg-[#ff8c1a] active:bg-[#e56f00]")}
               >
                 {copiedPromo ? (
                   <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 13l4 4L19 7" /></svg> Copied</>
@@ -356,7 +356,7 @@ function SponsorPromoCard({ s }: { s: Item }) {
                   <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v3"/></svg> Copy</>
                 )}
               </button>
-              <button onClick={openMenuFromPromo} className="mt-3 w-full rounded-full bg-white text-[#013216] text-sm font-bold py-3 hover:bg-white/90">View menu and build combo</button>
+              <button onClick={openMenuFromPromo} className="mt-3 w-full rounded-full bg-white text-[#013216] text-sm font-bold py-3 min-h-[44px] hover:bg-white/90 active:bg-white/80 cursor-pointer touch-manipulation">View menu and build combo</button>
               <p className="text-[11px] text-white/40 mt-3">Copy the code and apply it at checkout for 15% off</p>
             </div>
           </div>
@@ -365,10 +365,10 @@ function SponsorPromoCard({ s }: { s: Item }) {
 
       {/* Second modal - menu + combo + checkout */}
       {showMenu && (
-        <div className="fixed inset-0 z-[80] grid place-items-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={closeMenu}>
-          <div className="w-full max-w-[560px] my-4 sm:my-6 rounded-2xl bg-[#0a2a12] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in max-h-[92vh] sm:max-h-[90vh] flex flex-col" onClick={(e)=>e.stopPropagation()}>
+        <div className="fixed inset-0 z-[80] flex items-start sm:items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto overscroll-contain pt-[max(12px,env(safe-area-inset-top))] pb-[max(12px,env(safe-area-inset-bottom))]" onClick={closeMenu}>
+          <div className="w-full max-w-[calc(100vw-16px)] sm:max-w-[560px] my-2 sm:my-6 rounded-2xl bg-[#0a2a12] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in max-h-[92dvh] sm:max-h-[90vh] flex flex-col" onClick={(e)=>e.stopPropagation()}>
             <div className="h-1 bg-[#F57F17] shrink-0" />
-            <div className="p-4 sm:p-5 overflow-y-auto flex-1 overscroll-contain">
+            <div className="p-3 sm:p-5 overflow-y-auto flex-1 overscroll-contain overflow-x-hidden">
               {phase==="verifying" ? (
                 <div className="grid place-items-center py-10 text-center">
                   <div className="w-12 h-12 rounded-full border-4 border-[#F57F17]/30 border-t-[#F57F17]" style={{animation:"verify-spin 0.9s linear infinite"}} />
@@ -415,21 +415,21 @@ function SponsorPromoCard({ s }: { s: Item }) {
                     </div>
                   </div>
 
-                  <button onClick={closeReceipt} className="mt-5 w-full rounded-full bg-[#F57F17] text-white font-bold py-3 hover:bg-[#ff8c1a]">Done</button>
+                  <button onClick={closeReceipt} className="mt-5 w-full rounded-full bg-[#F57F17] text-white font-bold py-3 min-h-[44px] hover:bg-[#ff8c1a] active:bg-[#e56f00] cursor-pointer touch-manipulation">Done</button>
                   <p className="text-[11px] text-white/40 mt-2">Keep this receipt - you will need your Reference ID for verification at the venue.</p>
                 </div>
               ) : (
                 <>
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold text-[17px] sm:text-lg leading-tight">Order from {s.name || "Lumibakes & Treats"}</h3>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-[17px] sm:text-lg leading-tight break-words">Order from {s.name || "Lumibakes & Treats"}</h3>
                       <p className="text-xs sm:text-sm text-white/60 mt-1">Build your combo then complete payment below</p>
                     </div>
-                    <button onClick={closeMenu} className="shrink-0 w-8 h-8 grid place-items-center rounded-full bg-white/10 hover:bg-white/15 text-white" aria-label="Close">×</button>
+                    <button onClick={closeMenu} className="shrink-0 w-11 h-11 min-w-[44px] min-h-[44px] grid place-items-center rounded-full bg-white/10 hover:bg-white/15 active:bg-white/20 text-white cursor-pointer touch-manipulation text-lg leading-none" aria-label="Close menu">×</button>
                   </div>
 
-                  <div className="mt-4 rounded-xl bg-white/[0.06] border border-white/10 p-3 sm:p-3.5">
-                    <div className="flex items-center justify-between">
+                  <div className="mt-4 rounded-xl bg-white/[0.06] border border-white/10 p-3 sm:p-3.5 overflow-hidden">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
                       <h4 className="text-[11px] tracking-[0.14em] uppercase font-black text-[#F57F17]">Our Menu and Prices</h4>
                       <span className="text-[11px] text-white/50">Tap to add to combo</span>
                     </div>
@@ -442,21 +442,31 @@ function SponsorPromoCard({ s }: { s: Item }) {
                               const qty = combo[it.id] ?? 0;
                               const selected = qty > 0;
                               return (
-                                <div key={it.id} className={"flex items-center gap-2 sm:gap-3 rounded-xl px-2.5 sm:px-3 py-2.5 border transition-colors " + (selected ? "bg-[#F57F17]/15 border-[#F57F17]/40" : "bg-white/[0.04] border-white/10 hover:bg-white/[0.07]") }>
-                                  <button onClick={()=> toggleItem(it.id)} className={"w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 grid place-items-center shrink-0 transition-colors " + (selected ? "bg-[#F57F17] border-[#F57F17] text-white" : "border-white/25 bg-transparent")} aria-label={selected ? "Remove" : "Add"}>
+                                <div key={it.id} className={"flex items-start gap-2 sm:gap-3 rounded-xl px-3 py-3 border transition-colors " + (selected ? "bg-[#F57F17]/15 border-[#F57F17]/40" : "bg-white/[0.04] border-white/10 hover:bg-white/[0.07]") }>
+                                  <button onClick={()=> toggleItem(it.id)} className={"mt-0.5 w-7 h-7 sm:w-8 sm:h-8 min-w-[28px] min-h-[28px] rounded-full border-2 grid place-items-center shrink-0 transition-colors cursor-pointer touch-manipulation " + (selected ? "bg-[#F57F17] border-[#F57F17] text-white" : "border-white/25 bg-transparent active:bg-white/10")} aria-label={selected ? "Remove " + it.name : "Add " + it.name}>
                                     {selected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 13l4 4L19 7"/></svg>}
                                   </button>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-medium leading-tight truncate">{it.name}</div>
-                                    <div className="text-xs text-white/55">{it.category}</div>
+                                  <div className="flex-1 min-w-0 pt-0.5">
+                                    <div className="text-[13px] sm:text-sm font-medium leading-snug break-words">{it.name}</div>
+                                    <div className="text-[11px] sm:text-xs text-white/55 mt-0.5">{it.category}</div>
+                                    <div className="sm:hidden mt-1.5 flex items-center gap-2">
+                                      <span className="text-sm font-bold font-mono text-[#F57F17]">{formatNaira(it.price)}</span>
+                                      {selected && (
+                                        <span className="ml-auto flex items-center gap-1.5">
+                                          <button onClick={()=> dec(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-white/15 grid place-items-center text-sm hover:bg-white/20 active:bg-white/25 cursor-pointer touch-manipulation" aria-label="Decrease quantity">−</button>
+                                          <span className="w-7 text-center text-sm font-bold tabular-nums">{qty}</span>
+                                          <button onClick={()=> inc(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#F57F17] grid place-items-center text-sm text-white hover:bg-[#ff8c1a] active:bg-[#e56f00] cursor-pointer touch-manipulation" aria-label="Increase quantity">+</button>
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="text-right shrink-0">
+                                  <div className="hidden sm:flex flex-col items-end shrink-0 gap-1">
                                     <div className="text-sm font-bold font-mono text-[#F57F17]">{formatNaira(it.price)}</div>
                                     {selected && (
-                                      <div className="mt-1 flex items-center gap-1 justify-end">
-                                        <button onClick={()=> dec(it.id)} className="w-6 h-6 rounded-full bg-white/15 grid place-items-center text-xs hover:bg-white/20">−</button>
-                                        <span className="w-6 text-center text-xs font-bold">{qty}</span>
-                                        <button onClick={()=> inc(it.id)} className="w-6 h-6 rounded-full bg-[#F57F17] grid place-items-center text-xs text-white hover:bg-[#ff8c1a]">+</button>
+                                      <div className="flex items-center gap-1">
+                                        <button onClick={()=> dec(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-white/15 grid place-items-center text-sm hover:bg-white/20 active:bg-white/25 cursor-pointer touch-manipulation" aria-label="Decrease quantity">−</button>
+                                        <span className="w-7 text-center text-sm font-bold tabular-nums">{qty}</span>
+                                        <button onClick={()=> inc(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#F57F17] grid place-items-center text-sm text-white hover:bg-[#ff8c1a] active:bg-[#e56f00] cursor-pointer touch-manipulation" aria-label="Increase quantity">+</button>
                                       </div>
                                     )}
                                   </div>
@@ -480,12 +490,14 @@ function SponsorPromoCard({ s }: { s: Item }) {
                       <>
                         <div className="mt-3 grid gap-2">
                           {selectedList.map(({ item, qty }) => (
-                            <div key={item.id} className="flex items-center gap-2 text-sm bg-white/10 rounded-lg px-3 py-2">
-                              <span className="flex-1 min-w-0 truncate">{item.name} <span className="text-white/50">×{qty}</span></span>
-                              <span className="font-mono font-bold text-[#F57F17] text-xs sm:text-sm">{formatNaira(item.price * qty)}</span>
-                              <button onClick={()=> dec(item.id)} className="ml-1 w-6 h-6 grid place-items-center rounded-full bg-white/15 text-xs">−</button>
-                              <button onClick={()=> inc(item.id)} className="w-6 h-6 grid place-items-center rounded-full bg-[#F57F17] text-white text-xs">+</button>
-                              <button onClick={()=> toggleItem(item.id)} className="w-6 h-6 grid place-items-center rounded-full bg-white/10 text-white/70 text-[11px]">×</button>
+                            <div key={item.id} className="flex items-center gap-1.5 sm:gap-2 text-sm bg-white/10 rounded-lg px-2.5 sm:px-3 py-2.5">
+                              <span className="flex-1 min-w-0 text-[13px] sm:text-sm leading-snug break-words">{item.name} <span className="text-white/50 whitespace-nowrap">×{qty}</span></span>
+                              <span className="font-mono font-bold text-[#F57F17] text-xs sm:text-sm shrink-0">{formatNaira(item.price * qty)}</span>
+                              <span className="flex items-center gap-1 shrink-0 ml-1">
+                                <button onClick={()=> dec(item.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] grid place-items-center rounded-full bg-white/15 text-sm hover:bg-white/20 active:bg-white/25 cursor-pointer touch-manipulation" aria-label="Decrease">−</button>
+                                <button onClick={()=> inc(item.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] grid place-items-center rounded-full bg-[#F57F17] text-white text-sm hover:bg-[#ff8c1a] cursor-pointer touch-manipulation" aria-label="Increase">+</button>
+                                <button onClick={()=> toggleItem(item.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] grid place-items-center rounded-full bg-white/10 text-white/70 text-sm hover:bg-white/15 cursor-pointer touch-manipulation" aria-label="Remove item">×</button>
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -509,9 +521,9 @@ function SponsorPromoCard({ s }: { s: Item }) {
                     </div>
                     <div>
                       <div className="text-[11px] tracking-widest uppercase text-white/50">Account number</div>
-                      <div className="mt-1 flex items-center gap-2">
-                        <span className="font-mono text-lg font-bold tracking-wide break-all">{accountNumber}</span>
-                        <button onClick={handleCopyAcct} className={"inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-colors " + (copiedAcct ? "bg-white text-[#013216]" : "bg-white/10 text-white hover:bg-white/15")} aria-label="Copy account number">
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-[17px] sm:text-lg font-bold tracking-wide break-all min-w-0 flex-1">{accountNumber}</span>
+                        <button onClick={handleCopyAcct} className={"inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold shrink-0 transition-colors cursor-pointer touch-manipulation min-h-[36px] " + (copiedAcct ? "bg-white text-[#013216]" : "bg-white/10 text-white hover:bg-white/15 active:bg-white/20")} aria-label="Copy account number">
                           {copiedAcct ? (
                             <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 13l4 4L19 7" /></svg> Copied</>
                           ) : (
@@ -533,22 +545,22 @@ function SponsorPromoCard({ s }: { s: Item }) {
                           <span className="font-mono font-black text-lg text-[#F57F17]">{formatNaira(finalTotal)}</span>
                         </div>
                       )}
-                      <div className="mt-3 flex items-center gap-2 text-xs">
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
                         <span className="text-white/50">Promo:</span>
-                        <span className="font-mono font-bold text-[#F57F17]">{promoCode}</span>
-                        <button onClick={handleCopyPromoCheckout} className={"ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold " + (copiedPromoCheckout ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white")}>
+                        <span className="font-mono font-bold text-[#F57F17] break-all">{promoCode}</span>
+                        <button onClick={handleCopyPromoCheckout} className={"ml-auto inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer touch-manipulation min-h-[30px] transition-colors " + (copiedPromoCheckout ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white hover:bg-[#ff8c1a]")}>
                           {copiedPromoCheckout ? "Copied" : "Copy"}
                         </button>
                       </div>
                       <div className="mt-3 flex gap-2">
                         <input
-                          className="input flex-1 !py-2 text-sm"
+                          className="input flex-1 min-w-0 !py-2.5 text-sm"
                           placeholder="Paste promo code"
                           value={promoInput}
                           onChange={(e)=>{ setPromoInput(e.target.value); setPromoMsg(""); }}
                           onKeyDown={(e)=> { if(e.key==="Enter") handleApplyPromo(); }}
                         />
-                        <button onClick={handleApplyPromo} className={"px-4 py-2 rounded-full text-sm font-bold shrink-0 transition-colors " + (promoApplied ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white hover:bg-[#ff8c1a]")}>
+                        <button onClick={handleApplyPromo} className={"px-5 py-2.5 rounded-full text-sm font-bold shrink-0 transition-colors cursor-pointer touch-manipulation min-h-[44px] min-w-[72px] " + (promoApplied ? "bg-white text-[#013216]" : "bg-[#F57F17] text-white hover:bg-[#ff8c1a] active:bg-[#e56f00]")}>
                           {promoApplied ? "Applied" : "Apply"}
                         </button>
                       </div>
@@ -572,9 +584,9 @@ function SponsorPromoCard({ s }: { s: Item }) {
                     {refErr && <p className="text-xs text-red-300 mt-1.5 font-medium">Reference / Transaction ID is required to proceed</p>}
                   </label>
                   {msg && !refErr && <p className="text-xs text-red-300 mt-2">{msg}</p>}
-                  <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                    <button className="btn-ghost flex-1 order-2 sm:order-1" onClick={closeMenu}>Cancel</button>
-                    <button className="btn-primary flex-1 order-1 sm:order-2 !bg-[#F57F17] hover:!bg-[#ff8c1a] py-3 text-sm font-bold" onClick={completePayment}>Complete payment {finalTotal>0 ? "· " + formatNaira(finalTotal) : ""}</button>
+                  <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <button className="btn-ghost flex-1 order-2 sm:order-1 !py-3 min-h-[44px] cursor-pointer touch-manipulation" onClick={closeMenu}>Cancel</button>
+                    <button className="btn-primary flex-1 order-1 sm:order-2 !bg-[#F57F17] hover:!bg-[#ff8c1a] active:!bg-[#e56f00] !py-3 min-h-[44px] text-sm font-bold cursor-pointer touch-manipulation" onClick={completePayment}>Complete payment {finalTotal>0 ? "· " + formatNaira(finalTotal) : ""}</button>
                   </div>
                   <p className="text-[11px] text-white/40 text-center mt-3">Payments are verified by admin. Your combo will be confirmed after verification.</p>
                 </>

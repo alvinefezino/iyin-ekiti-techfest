@@ -3,11 +3,11 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { sendEmail, shell } from "@/lib/email";
 import { SITE } from "@/lib/site";
-import { limited } from "@/lib/rate";
+import { limited, getClientIp } from "@/lib/rate";
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "anon";
-  if (limited(`sub:${ip}`, 5)) return NextResponse.json({ error: "Too many attempts. Try later." }, { status: 429 });
+  const ip = getClientIp(req);
+  if (await limited(`sub:${ip}`, 5)) return NextResponse.json({ error: "Too many attempts. Try later." }, { status: 429 });
   const parsed = z.object({ email: z.string().email() }).safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Enter a valid email." }, { status: 400 });
   const email = parsed.data.email.toLowerCase();

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { sendEmail, hackathonEmailHtml } from "@/lib/email";
-import { limited } from "@/lib/rate";
+import { limited, getClientIp } from "@/lib/rate";
 
 const schema = z.object({
   full_name: z.string().min(2).max(120),
@@ -13,8 +13,8 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "anon";
-  if (limited(`reg:${ip}`, 5)) return NextResponse.json({ error: "Too many attempts. Try later." }, { status: 429 });
+  const ip = getClientIp(req);
+  if (await limited(`reg:${ip}`, 5)) return NextResponse.json({ error: "Too many attempts. Try later." }, { status: 429 });
   const parsed = schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Check your details and try again." }, { status: 400 });
   const d = parsed.data;

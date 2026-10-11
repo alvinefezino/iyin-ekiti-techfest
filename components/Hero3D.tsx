@@ -69,6 +69,8 @@ function Laptop({ remaining, progress }: { remaining: Remaining; progress: Motio
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     drawScreen(ctx, remaining);
+    // CanvasTexture.needsUpdate is a mutable THREE flag - intentional
+    // eslint-disable-next-line react-hooks/immutability
     texture.needsUpdate = true;
   }, [remaining, canvas, texture]);
 
@@ -78,6 +80,7 @@ function Laptop({ remaining, progress }: { remaining: Remaining; progress: Motio
     return out;
   }, []);
 
+  /* eslint-disable react-hooks/immutability -- R3F useFrame intentionally mutates camera/group each frame */
   useFrame((state) => {
     const aspect = size.width / size.height;
     const target = Math.max(5.4, 5.2 / aspect);
@@ -94,6 +97,7 @@ function Laptop({ remaining, progress }: { remaining: Remaining; progress: Motio
     g.rotation.x += (rx - g.rotation.x) * 0.06;
     g.position.y = -0.2 + Math.sin(t * 0.6) * 0.03;
   });
+  /* eslint-enable react-hooks/immutability */
 
   const grey = "#9aa0a6";
   return (
@@ -130,6 +134,11 @@ function Laptop({ remaining, progress }: { remaining: Remaining; progress: Motio
   );
 }
 
+// MotionValue is non-serializable but correct for framer-motion scroll animation.
+// Hero3D is dynamically imported with ssr:false in HeroBlock, so it never
+// crosses the RSC serialization boundary - TS71007 is a false positive here.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore TS71007 false positive: client-only dynamic import, never serialized
 export default function Hero3D({ remaining, progress }: { remaining: Remaining; progress: MotionValue<number> }) {
   return (
     <Canvas dpr={[1, 1.6]} camera={{ position: [0, 1.3, 6], fov: 40 }} gl={{ antialias: true, alpha: true }}>
