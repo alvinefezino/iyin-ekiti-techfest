@@ -84,7 +84,7 @@ export default function Loader() {
             ))}
           </div>
 
-          {/* falling shower — now 52 logos, more density */}
+          {/* falling shower - now 52 logos, more density */}
           {items.map((it, i) => (
             // eslint-disable-next-line @next/next/no-img-element
             <motion.img

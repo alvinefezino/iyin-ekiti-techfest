@@ -129,7 +129,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
         key: "items", label: "Sponsors", kind: "items", fields: [
           { key: "name", label: "Name", kind: "text" } as SubField,
           { key: "image", label: "Logo", kind: "image" } as SubField,
-          { key: "badge", label: "Badge (e.g. Food sponsor — shows above card)", kind: "text", placeholder: "Food sponsor" } as SubField,
+          { key: "badge", label: "Badge (e.g. Food sponsor - shows above card)", kind: "text", placeholder: "Food sponsor" } as SubField,
           { key: "highlight", label: "Highlight with animated orange arrow (clickable)", kind: "checkbox" } as SubField,
           { key: "promoEnabled", label: "Enable promo flow on click (shows promo code → payment modal)", kind: "checkbox" } as SubField,
           { key: "promoCode", label: "Promo code", kind: "text", placeholder: "IYINTECHFEST" } as SubField,

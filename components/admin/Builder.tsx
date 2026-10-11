@@ -23,7 +23,7 @@ function Leaf({ f, value, onChange }: { f: Sub | Field; value: string; onChange:
     const opts: string[] = (f as any).options ?? [];
     return (
       <select className="input" value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
-        <option value="">—</option>
+        <option value="">-</option>
         {opts.map((o) => <option key={o} value={o} className="text-black">{o}</option>)}
       </select>
     );

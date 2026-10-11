@@ -138,7 +138,7 @@ export function RegistrationsPanel() {
   return (
     <div className="glass p-4">
       <div className="flex justify-between items-center mb-3">
-        <div><h2 className="font-semibold">Hackathon registrations ({rows.length})</h2><p className="text-xs text-muted">Select people and send them an automatic mail with their Exam Terminal link (copy/paste/screenshot/exit disqualifies — modal says You are disqualified).</p></div>
+        <div><h2 className="font-semibold">Hackathon registrations ({rows.length})</h2><p className="text-xs text-muted">Select people and send them an automatic mail with their Exam Terminal link (copy/paste/screenshot/exit disqualifies - modal says You are disqualified).</p></div>
         <div className="flex gap-2"><button className="btn-primary !py-1 text-sm disabled:opacity-50" disabled={sending||selected.size===0} onClick={sendInvites}>{sending ? "Sending…" : `Send Exam Terminal link to ${selected.size || ""}`.trim()}</button><button className="btn-ghost !py-1 text-sm" onClick={csv}>Download CSV</button></div>
       </div>
       <div className="overflow-x-auto">
@@ -182,7 +182,7 @@ export function AttendeesPanel() {
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-t border-white/10 align-top">
-                <td className="py-1">{r.full_name}</td><td>{r.email}</td><td className="max-w-[14rem] truncate" title={r.learning_interest || ""}>{r.learning_interest || "—"}</td><td>{r.phone}</td><td>{r.team_name}</td><td>{(r.team_members ?? []).join(", ")}</td>
+                <td className="py-1">{r.full_name}</td><td>{r.email}</td><td className="max-w-[14rem] truncate" title={r.learning_interest || ""}>{r.learning_interest || "-"}</td><td>{r.phone}</td><td>{r.team_name}</td><td>{(r.team_members ?? []).join(", ")}</td>
               </tr>
             ))}
           </tbody>
@@ -494,8 +494,8 @@ export function SponsorPromoPanel() {
                 <td className="text-xs font-medium max-w-[9rem] truncate">{r.sponsor_name}</td>
                 <td><div className="font-mono text-xs font-bold">{r.reference_id}</div><div className="font-mono text-[11px] text-[#F57F17]">{r.promo_code}</div></td>
                 <td className="text-xs max-w-[18rem]">{items.length ? items.map((it:any)=> `${it.name} ×${it.qty??1}`).join(" · ") : <span className="text-muted">no items</span>}</td>
-                <td className="font-mono text-xs font-bold text-[#F57F17] whitespace-nowrap">{r.total_naira ? formatNaira(r.total_naira) : "—"}</td>
-                <td className="text-xs"><span className="font-mono">{r.account_number || "—"}</span><div className="text-muted text-[11px]">{r.bank_name || ""} {r.account_name || ""}</div></td>
+                <td className="font-mono text-xs font-bold text-[#F57F17] whitespace-nowrap">{r.total_naira ? formatNaira(r.total_naira) : "-"}</td>
+                <td className="text-xs"><span className="font-mono">{r.account_number || "-"}</span><div className="text-muted text-[11px]">{r.bank_name || ""} {r.account_name || ""}</div></td>
                 <td><span className={`px-2 py-0.5 rounded-full text-xs whitespace-nowrap ${r.status==="verified"?"bg-[#F57F17] text-black": r.status==="rejected"?"bg-white text-black":"bg-white/15 text-white border border-white/15"}`}>{r.status}</span></td>
                 <td className="flex gap-1 py-1">
                   <button className="px-2 py-1 rounded-full bg-[#F57F17] text-black text-xs disabled:opacity-40 whitespace-nowrap" disabled={r.status==="verified"} onClick={()=>patch(r.id,"verified")}>Verify</button>
@@ -535,7 +535,7 @@ export function AdminAIPanel() {
       const res = await fetch("/api/admin/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, audience, mode: "broadcast" }) });
       const j = await res.json().catch(() => ({} as any));
       if (!res.ok) setMsg(j.error ? String(j.error).slice(0, 400) : `Failed ${res.status}`);
-      else { setSubject(j.subject || ""); setBody(j.body || ""); setMsg("Draft ready — review then Send. Uses {{name}} so each person gets their real name (from registration or Gmail like john.doe@gmail.com → John)."); }
+      else { setSubject(j.subject || ""); setBody(j.body || ""); setMsg("Draft ready - review then Send. Uses {{name}} so each person gets their real name (from registration or Gmail like john.doe@gmail.com → John)."); }
     } catch (e: any) { setMsg(String(e?.message || e).slice(0,300)); }
     setDrafting(false);
   };
@@ -555,8 +555,8 @@ export function AdminAIPanel() {
   return (
     <div className="grid lg:grid-cols-2 gap-4">
       <div className="glass p-4 grid gap-3 content-start">
-        <h2 className="font-semibold">AI Assistant — Email drafts & sending</h2>
-        <p className="text-xs text-muted">Describe the email in plain English. AI drafts subject + body with {"{{name}}"} so each recipient gets their real name — from hackathon_registrations or Gmail (e.g. ada.lovelace@gmail.com → Ada), never &quot;first name&quot; or &quot;contestant&quot;.</p>
+        <h2 className="font-semibold">AI Assistant - Email drafts & sending</h2>
+        <p className="text-xs text-muted">Describe the email in plain English. AI drafts subject + body with {"{{name}}"} so each recipient gets their real name - from hackathon_registrations or Gmail (e.g. ada.lovelace@gmail.com → Ada), never &quot;first name&quot; or &quot;contestant&quot;.</p>
         <div className="flex gap-1">
           {(["contestants", "subscribers"] as const).map((a) => (
             <button key={a} onClick={() => setAudience(a)} className={`px-3 py-1 rounded-full text-sm capitalize ${audience === a ? "bg-[#F57F17] text-black" : "bg-white/10"}`}>{a} <span className="text-xs opacity-70">({a === "contestants" ? counts.contestants : counts.subs})</span></button>
@@ -566,8 +566,8 @@ export function AdminAIPanel() {
         <button className="btn-primary !py-2 text-sm w-fit disabled:opacity-50" disabled={drafting} onClick={draft}>{drafting ? "Drafting…" : "Draft with AI"}</button>
         <div className="border-t border-white/10 pt-3 grid gap-3">
           <input className="input text-sm" placeholder="Subject (AI fills this)" value={subject} onChange={(e) => setSubject(e.target.value)} />
-          <textarea className="input min-h-[180px] text-sm whitespace-pre-wrap" placeholder="Message body — use {{name}} where you want the person's name. AI drafts this for you." value={body} onChange={(e) => setBody(e.target.value)} />
-          <div className="text-[11px] text-muted">Tip: keep {"{{name}}"} / {"{{firstName}}"} / {"{{fullName}}"} in the draft — server replaces it per-recipient before sending. Stray &quot;first name&quot; or &quot;contestant&quot; is auto-replaced with the real name.</div>
+          <textarea className="input min-h-[180px] text-sm whitespace-pre-wrap" placeholder="Message body - use {{name}} where you want the person's name. AI drafts this for you." value={body} onChange={(e) => setBody(e.target.value)} />
+          <div className="text-[11px] text-muted">Tip: keep {"{{name}}"} / {"{{firstName}}"} / {"{{fullName}}"} in the draft - server replaces it per-recipient before sending. Stray &quot;first name&quot; or &quot;contestant&quot; is auto-replaced with the real name.</div>
           <button className="btn-primary !py-2 text-sm w-fit disabled:opacity-50" disabled={sending || !subject.trim() || !body.trim()} onClick={send}>{sending ? "Sending…" : `Send to ${count} ${audience}`}</button>
         </div>
         {msg && <p className="text-xs text-teal whitespace-pre-wrap break-words">{msg}</p>}
@@ -576,13 +576,13 @@ export function AdminAIPanel() {
         <h3 className="font-semibold text-sm">Preview (Gmail name fallback)</h3>
         <p className="text-xs text-muted">How the greeting personalizes per recipient. If no registration name, Gmail local-part is used: john.doe123@gmail.com → John, ada_lovelace@gmail.com → Ada.</p>
         <div className="rounded-xl border border-white/10 bg-black/20 p-3 grid gap-2">
-          <div className="text-xs"><span className="text-muted">Subject:</span> <b>{subject || <span className="text-muted">—</span>}</b></div>
+          <div className="text-xs"><span className="text-muted">Subject:</span> <b>{subject || <span className="text-muted">-</span>}</b></div>
           <div className="text-xs whitespace-pre-wrap break-words bg-white/5 rounded-lg p-3 min-h-[160px]">{
             body
               ? body.replace(/\{\{\s*(name|firstName|first[_\- ]?name)\s*\}\}/gi, "John").replace(/\{\{\s*fullName\s*\}\}/gi, "John Doe").replace(/\b(first name|contestant)s?\b/gi, "John")
               : <span className="text-muted">Draft appears here… try "Draft with AI" then edit before sending.</span>
           }</div>
-          <div className="text-[11px] text-muted">Example recipient: ada.lovelace@gmail.com → &quot;Hi Ada,&quot; · Tobi (has registration name) → &quot;Hi Tobi,&quot; — never &quot;Hi first name,&quot; or &quot;Hi contestant,&quot;.</div>
+          <div className="text-[11px] text-muted">Example recipient: ada.lovelace@gmail.com → &quot;Hi Ada,&quot; · Tobi (has registration name) → &quot;Hi Tobi,&quot; - never &quot;Hi first name,&quot; or &quot;Hi contestant,&quot;.</div>
         </div>
         <div className="rounded-xl border border-[#F57F17]/30 bg-[#F57F17]/10 p-3">
           <div className="text-xs font-bold text-[#F57F17]">How names are picked</div>

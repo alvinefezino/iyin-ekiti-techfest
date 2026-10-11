@@ -35,7 +35,7 @@ Audience: ${aud}. Mode: ${m}.
 Rules:
 - Return ONLY valid JSON with keys "subject" and "body" (no extra keys, no markdown fence).
 - Subject: concise, 6-12 words, no asterisks.
-- Body: warm, professional, concise. Use {{name}} wherever you would address the person — never write "first name", "contestant", "Dear contestant", or "Hello first name". Use "Hi {{name}}," or "Dear {{name}}," as the greeting.
+- Body: warm, professional, concise. Use {{name}} wherever you would address the person - never write "first name", "contestant", "Dear contestant", or "Hello first name". Use "Hi {{name}}," or "Dear {{name}}," as the greeting.
 - Do NOT include the greeting in subject. Body should start with greeting line.
 - Keep body plain text (use \\n for paragraphs). The server will personalize {{name}} from the person's real name or Gmail before sending.
 - Event context: Iyin Ekiti TechFest 2026 Hackathon by FIESU, date ${SITE.eventDate}.`;
@@ -80,7 +80,7 @@ Rules:
   }
 
   if (!parsed) return NextResponse.json({ error: `AI could not draft email. ${lastText.slice(0, 300)}`, status: lastStatus || 502 }, { status: 502 });
-  // Final sanitize: never send literal "first name" / "contestant" — replace with {{name}}
+  // Final sanitize: never send literal "first name" / "contestant" - replace with {{name}}
   parsed.body = parsed.body.replace(/\b(first name|contestant)s?\b/gi, "{{name}}");
   return NextResponse.json({ ok: true, subject: parsed.subject, body: parsed.body });
 }

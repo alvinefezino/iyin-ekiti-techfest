@@ -232,10 +232,10 @@ function SponsorPromoCard({ s }: { s: Item }) {
 
   const handleApplyPromo = () => {
     if (!promoInput.trim()) { setPromoMsg("Enter promo code"); return; }
-    if (promoApplied) { setPromoMsg("Promo already applied — 15% off"); return; }
+    if (promoApplied) { setPromoMsg("Promo already applied - 15% off"); return; }
     if (promoInput.trim().toUpperCase() === promoCode.toUpperCase()) {
       setPromoApplied(true);
-      setPromoMsg("Promo applied — 15% off");
+      setPromoMsg("Promo applied - 15% off");
     } else {
       setPromoMsg("Invalid promo code");
     }
@@ -333,7 +333,7 @@ function SponsorPromoCard({ s }: { s: Item }) {
         </Card>
       </div>
 
-      {/* First modal — promo code only */}
+      {/* First modal - promo code only */}
       {active && showPromo && (
         <div className="fixed inset-0 z-[80] grid place-items-center p-4 bg-black/60 backdrop-blur-sm" onClick={()=> setShowPromo(false)}>
           <div className="w-full max-w-[360px] rounded-2xl bg-[#0a2a12] border border-[#F57F17]/40 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in flex flex-col" onClick={(e)=>e.stopPropagation()}>
@@ -363,7 +363,7 @@ function SponsorPromoCard({ s }: { s: Item }) {
         </div>
       )}
 
-      {/* Second modal — menu + combo + checkout */}
+      {/* Second modal - menu + combo + checkout */}
       {showMenu && (
         <div className="fixed inset-0 z-[80] grid place-items-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={closeMenu}>
           <div className="w-full max-w-[560px] my-4 sm:my-6 rounded-2xl bg-[#0a2a12] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in max-h-[92vh] sm:max-h-[90vh] flex flex-col" onClick={(e)=>e.stopPropagation()}>
@@ -416,7 +416,7 @@ function SponsorPromoCard({ s }: { s: Item }) {
                   </div>
 
                   <button onClick={closeReceipt} className="mt-5 w-full rounded-full bg-[#F57F17] text-white font-bold py-3 hover:bg-[#ff8c1a]">Done</button>
-                  <p className="text-[11px] text-white/40 mt-2">Keep this receipt — you will need your Reference ID for verification at the venue.</p>
+                  <p className="text-[11px] text-white/40 mt-2">Keep this receipt - you will need your Reference ID for verification at the venue.</p>
                 </div>
               ) : (
                 <>
@@ -500,7 +500,7 @@ function SponsorPromoCard({ s }: { s: Item }) {
                     )}
                   </div>
 
-                  {/* Checkout — bank + promo apply + ref */}
+                  {/* Checkout - bank + promo apply + ref */}
                   <div className="mt-4 grid gap-3 rounded-xl bg-white/[0.06] border border-white/10 p-3.5">
                     <h4 className="text-xs font-black tracking-[0.12em] uppercase text-white">Checkout</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">

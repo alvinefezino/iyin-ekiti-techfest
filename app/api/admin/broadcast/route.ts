@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     out = out.replace(/\{\{\s*first[_\- ]?name\s*\}\}/gi, esc(first));
     out = out.replace(/\{\{\s*fullName\s*\}\}/gi, esc(fullName));
     out = out.replace(/\{\{\s*full[_\- ]?name\s*\}\}/gi, esc(fullName));
-    // never send literal "first name" / "contestant" placeholder — replace stray phrases
+    // never send literal "first name" / "contestant" placeholder - replace stray phrases
     out = out.replace(/\b(first name|contestant)\b/gi, esc(first));
     return out;
   }

@@ -93,8 +93,8 @@ export default function TeamPage() {
         </a>
 
         <div className="glass-strong mt-4 rounded-2xl p-4 sm:p-6">
-          <h1 className="text-xl font-semibold leading-tight sm:text-2xl">Registration team — directory</h1>
-          <p className="mt-1 text-sm text-muted">Search hackers and attendees by name, email or learning interest. For check-in only — exam results are managed by admins.</p>
+          <h1 className="text-xl font-semibold leading-tight sm:text-2xl">Registration team - directory</h1>
+          <p className="mt-1 text-sm text-muted">Search hackers and attendees by name, email or learning interest. For check-in only - exam results are managed by admins.</p>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email or what they want to learn…" className="input min-w-[16rem] flex-1" />
@@ -104,7 +104,7 @@ export default function TeamPage() {
           {needCode && (
             <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
               <div className="font-semibold">Team access code required</div>
-              <p className="mt-1 text-xs opacity-80">Admin sets TEAM_CODE in env. Enter it once — saved for this browser tab. Admins signed in do not need it.</p>
+              <p className="mt-1 text-xs opacity-80">Admin sets TEAM_CODE in env. Enter it once - saved for this browser tab. Admins signed in do not need it.</p>
               <div className="mt-2 flex gap-2">
                 <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Enter team code" className="input flex-1" onKeyDown={(e) => e.key === "Enter" && saveCodeAndReload()} />
                 <button type="button" onClick={saveCodeAndReload} className="btn-primary">Unlock</button>
@@ -142,8 +142,8 @@ export default function TeamPage() {
                     <tr key={h.id} className="border-t border-white/10 align-top">
                       <td className="py-2 pr-2 font-medium">{h.full_name}</td>
                       <td className="py-2 pr-2 break-all">{h.email}</td>
-                      <td className="py-2 pr-2">{h.phone || "—"}</td>
-                      <td className="py-2 pr-2">{h.team_name || "—"}</td>
+                      <td className="py-2 pr-2">{h.phone || "-"}</td>
+                      <td className="py-2 pr-2">{h.team_name || "-"}</td>
                     </tr>
                   ))}
                   {hackers.length === 0 && (
@@ -171,9 +171,9 @@ export default function TeamPage() {
                     <tr key={a.id} className="border-t border-white/10 align-top">
                       <td className="py-2 pr-2 font-medium">{a.full_name}</td>
                       <td className="py-2 pr-2 break-all">{a.email}</td>
-                      <td className="py-2 pr-2 max-w-[16rem] truncate" title={a.learning_interest || ""}>{a.learning_interest || "—"}</td>
-                      <td className="py-2 pr-2">{a.phone || "—"}</td>
-                      <td className="py-2 pr-2">{a.team_name || "—"}</td>
+                      <td className="py-2 pr-2 max-w-[16rem] truncate" title={a.learning_interest || ""}>{a.learning_interest || "-"}</td>
+                      <td className="py-2 pr-2">{a.phone || "-"}</td>
+                      <td className="py-2 pr-2">{a.team_name || "-"}</td>
                     </tr>
                   ))}
                   {attendees.length === 0 && (

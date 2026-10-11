@@ -3,7 +3,7 @@ import { supabaseAdmin, requireAdmin } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-// Team directory: hackers + attendees — check-in only. No exam pass/fail here (admin panel only).
+// Team directory: hackers + attendees - check-in only. No exam pass/fail here (admin panel only).
 // Auth: allowed if (a) valid admin session OR (b) correct x-team-code header / ?code= when TEAM_CODE is set
 // If TEAM_CODE is not set, admin session is required.
 

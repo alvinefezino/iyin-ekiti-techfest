@@ -63,7 +63,7 @@ async function sendViaResend(
     let msg = text;
     try { const j = JSON.parse(text); msg = (j as any).message || (j as any).error || text; } catch {}
     if (/domain.*not.*verified|403/i.test(msg)) {
-      return { ok: false, error: `${msg} — verify iyinekititechfest.com in Resend (DNS) and use a verified FROM like noreply@iyinekititechfest.com.` };
+      return { ok: false, error: `${msg} - verify iyinekititechfest.com in Resend (DNS) and use a verified FROM like noreply@iyinekititechfest.com.` };
     }
     return { ok: false, error: String(msg || `Resend ${res.status}`) };
   } catch (e: unknown) {
@@ -141,7 +141,7 @@ export function welcomeEmailHtml(name: string) {
   const safe = name.replace(/[<>]/g, "");
   return shell(`
     <p style="margin:0 0 12px;font-size:15px">Hi ${safe},</p>
-    <p style="margin:0 0 12px;line-height:1.6">Welcome to <strong>Iyin Ekiti TechFest 2026</strong> — we are excited to have you join us. Your event attendee registration is confirmed.</p>
+    <p style="margin:0 0 12px;line-height:1.6">Welcome to <strong>Iyin Ekiti TechFest 2026</strong> - we are excited to have you join us. Your event attendee registration is confirmed.</p>
     <p style="margin:0 0 12px;line-height:1.6">You will receive updates about schedule, venue, and check in details closer to the event. Keep this email for your records.</p>
     <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:14px 16px;margin:16px 0;text-align:center">
       <div style="font-size:13px;color:#166534;font-weight:700">What is next</div>
