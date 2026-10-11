@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
     }
     const greeting = `Dear ${displayName},`;
     const link = `${SITE.url}/exam/${token}`;
-    const previewLink = `${link}?preview=1`;
     const html = shell(`
       <div style="max-width:560px;margin:0 auto;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#0a0a0a;line-height:1.6">
         <div style="background:#013216;color:#FFFFFF;padding:20px 24px;border-radius:16px 16px 0 0;text-align:center">
@@ -68,11 +67,6 @@ export async function POST(req: NextRequest) {
           <div style="text-align:center;margin:20px 0 8px">
             <a href="${link}" style="display:inline-block;background:#F57F17;color:#000000;padding:12px 22px;border-radius:999px;text-decoration:none;font-weight:700">Open Exam Terminal Start 20 min</a>
           </div>
-          <div style="text-align:center;margin:0 0 14px">
-            <a href="${previewLink}" style="display:inline-block;background:#013216;color:#FFFFFF;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:600;font-size:13px">Preview questions no timer</a>
-          </div>
-          <p style="font-size:12px;word-break:break-all;text-align:center;margin:8px 0 0"><a style="color:#F57F17" href="${link}">${link}</a></p>
-          <p style="font-size:11px;color:#6B7280;text-align:center;margin:4px 0 0">Preview: <a style="color:#F57F17" href="${previewLink}">${previewLink}</a></p>
           <p style="font-size:12px;color:#6B7280;margin:16px 0 0">Link expires in 7 days and is tied to your mail. Do not share it. Use a laptop or desktop with stable internet. Good luck</p>
           <p style="font-size:12px;color:#013216;margin:12px 0 0;font-weight:600">FIESU and Iyin Ekiti TechFest Team</p>
           <p style="font-size:11px;color:#9CA3AF;margin:4px 0 0">Questions Reply to this mail or contact FIESU via the site.</p>
