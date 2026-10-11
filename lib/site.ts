@@ -7,5 +7,5 @@ export const SITE = {
   logo: "/logo-white.jpg",
   logoWhite: "/logo-white.jpg",
   logoBlack: "/logo-black.jpg",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  url: (process.env.NEXT_PUBLIC_SITE_URL || "https://www.iyinekititechfest.com").replace(/\/$/, ""),
 };
