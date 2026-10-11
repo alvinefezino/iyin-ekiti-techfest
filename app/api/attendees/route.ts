@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -10,6 +11,7 @@ const schema = z.object({
   phone: z.string().max(30).optional().default(""),
   team_name: z.string().max(120).optional().default(""),
   members: z.string().max(1000).optional().default(""),
+  learning_interest: z.string().max(2000).optional().default(""),
 });
 
 export async function POST(req: NextRequest) {
@@ -24,7 +26,8 @@ export async function POST(req: NextRequest) {
     email,
     phone: d.phone,
     team_name: d.team_name,
-    team_members: d.members.split("\\n").map((s) => s.trim()).filter(Boolean),
+    team_members: d.members.split("\n").map((s) => s.trim()).filter(Boolean),
+    learning_interest: d.learning_interest?.trim() || null,
   });
   if (error) return NextResponse.json({ error: "Couldn't register. Try again." }, { status: 500 });
 

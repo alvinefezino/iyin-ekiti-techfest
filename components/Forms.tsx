@@ -59,7 +59,7 @@ export function RegisterForm() {
 }
 
 export function AttendeesForm() {
-  const [f, setF] = useState({ full_name: "", email: "", phone: "", team_name: "", members: "" });
+  const [f, setF] = useState({ full_name: "", email: "", learning_interest: "", phone: "", team_name: "", members: "" });
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
@@ -71,15 +71,21 @@ export function AttendeesForm() {
         setBusy(true);
         const { ok, data } = await post("/api/attendees", f);
         setMsg(ok ? "You are registered for the event. Check your email for confirmation." : data.error || "Something went wrong. Try again.");
-        if (ok) setF({ full_name: "", email: "", phone: "", team_name: "", members: "" });
+        if (ok) setF({ full_name: "", email: "", learning_interest: "", phone: "", team_name: "", members: "" });
         setBusy(false);
       }}
     >
       <input className="input" required placeholder="Full name" value={f.full_name} onChange={set("full_name")} />
       <input className="input" required type="email" placeholder="Email" value={f.email} onChange={set("email")} />
-      <input className="input" placeholder="Phone number" value={f.phone} onChange={set("phone")} />
-      <input className="input" placeholder="Team name (optional)" value={f.team_name} onChange={set("team_name")} />
-      <textarea className="input" rows={3} placeholder="Team members, one per line (optional)" value={f.members} onChange={set("members")} />
+      <textarea className="input min-h-[96px]" required rows={3} placeholder="What would you like to learn? (e.g. Web dev, AI, design...)" value={f.learning_interest} onChange={set("learning_interest")} />
+      <details className="text-sm opacity-80">
+        <summary className="cursor-pointer select-none text-xs underline">Optional: phone / team</summary>
+        <div className="mt-3 grid gap-3">
+          <input className="input" placeholder="Phone number (optional)" value={f.phone} onChange={set("phone")} />
+          <input className="input" placeholder="Team name (optional)" value={f.team_name} onChange={set("team_name")} />
+          <textarea className="input" rows={2} placeholder="Team members, one per line (optional)" value={f.members} onChange={set("members")} />
+        </div>
+      </details>
       <button className="btn-primary w-full sm:w-auto" disabled={busy}>{busy ? "Registering..." : "Register for event"}</button>
       {msg && <p className="text-sm text-teal">{msg}</p>}
     </form>

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { SITE } from "@/lib/site";
 
 type Hacker = { id: string; full_name: string; email: string; phone: string; team_name: string; team_members: string[]; created_at: string };
-type Attendee = { id: string; full_name: string; email: string; phone: string; team_name: string; team_members: string[]; created_at: string };
+type Attendee = { id: string; full_name: string; email: string; phone: string; team_name: string; team_members: string[]; learning_interest: string | null; created_at: string };
 
 export default function TeamPage() {
   const [q, setQ] = useState("");
@@ -62,14 +62,25 @@ export default function TeamPage() {
   };
 
   const csv = (which: "hackers" | "attendees") => {
-    const head = ["full_name", "email", "phone", "team_name", "created_at"];
-    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const rows = which === "hackers" ? hackers : attendees;
-    const out = [head.join(","), ...rows.map((r: any) => head.map((h) => esc(r[h])).join(","))].join("\n");
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([out], { type: "text/csv" }));
-    a.download = which === "hackers" ? "team_hackers.csv" : "team_attendees.csv";
-    a.click();
+    if (which === "hackers") {
+      const head = ["full_name", "email", "phone", "team_name", "created_at"];
+      const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const rows = hackers;
+      const out = [head.join(","), ...rows.map((r: any) => head.map((h) => esc(r[h])).join(","))].join("\n");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([out], { type: "text/csv" }));
+      a.download = "team_hackers.csv";
+      a.click();
+    } else {
+      const head = ["full_name", "email", "learning_interest", "phone", "team_name", "created_at"];
+      const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const rows = attendees;
+      const out = [head.join(","), ...rows.map((r: any) => head.map((h) => esc(r[h])).join(","))].join("\n");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([out], { type: "text/csv" }));
+      a.download = "team_attendees.csv";
+      a.click();
+    }
   };
 
   return (
@@ -83,10 +94,10 @@ export default function TeamPage() {
 
         <div className="glass-strong mt-4 rounded-2xl p-4 sm:p-6">
           <h1 className="text-xl font-semibold leading-tight sm:text-2xl">Registration team — directory</h1>
-          <p className="mt-1 text-sm text-muted">Search hackers and attendees by name or email. For check-in only — exam results are managed by admins.</p>
+          <p className="mt-1 text-sm text-muted">Search hackers and attendees by name, email or learning interest. For check-in only — exam results are managed by admins.</p>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or email…" className="input min-w-[16rem] flex-1" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email or what they want to learn…" className="input min-w-[16rem] flex-1" />
             <button type="button" onClick={() => load(q, code)} className="btn-primary whitespace-nowrap">Search</button>
           </div>
 
@@ -145,11 +156,12 @@ export default function TeamPage() {
 
           {!loading && !needCode && tab === "attendees" && (
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[32rem] text-sm">
+              <table className="w-full min-w-[40rem] text-sm">
                 <thead>
                   <tr className="text-left text-xs text-muted">
                     <th className="py-2 font-medium">Name</th>
                     <th className="font-medium">Email</th>
+                    <th className="font-medium">Wants to learn</th>
                     <th className="font-medium">Phone</th>
                     <th className="font-medium">Team</th>
                   </tr>
@@ -159,12 +171,13 @@ export default function TeamPage() {
                     <tr key={a.id} className="border-t border-white/10 align-top">
                       <td className="py-2 pr-2 font-medium">{a.full_name}</td>
                       <td className="py-2 pr-2 break-all">{a.email}</td>
+                      <td className="py-2 pr-2 max-w-[16rem] truncate" title={a.learning_interest || ""}>{a.learning_interest || "—"}</td>
                       <td className="py-2 pr-2">{a.phone || "—"}</td>
                       <td className="py-2 pr-2">{a.team_name || "—"}</td>
                     </tr>
                   ))}
                   {attendees.length === 0 && (
-                    <tr><td colSpan={4} className="py-8 text-center text-muted">No attendees yet.</td></tr>
+                    <tr><td colSpan={5} className="py-8 text-center text-muted">No attendees yet.</td></tr>
                   )}
                 </tbody>
               </table>

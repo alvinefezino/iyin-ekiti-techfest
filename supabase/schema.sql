@@ -174,3 +174,6 @@ create table if not exists sponsor_promo_payments (
 );
 alter table sponsor_promo_payments enable row level security;
 create policy "admin_sponsor_promo" on sponsor_promo_payments for all using (is_admin()) with check (is_admin());
+-- Attendee learning interest: what would you like to learn
+ALTER TABLE event_attendees ADD COLUMN IF NOT EXISTS learning_interest TEXT;
+

@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
   const [regsRes, attendeesRes] = await Promise.all([
     sb.from("hackathon_registrations").select("id,full_name,email,phone,team_name,team_members,created_at").order("created_at", { ascending: false }),
-    sb.from("event_attendees").select("id,full_name,email,phone,team_name,team_members,created_at").order("created_at", { ascending: false }),
+    sb.from("event_attendees").select("id,full_name,email,phone,team_name,team_members,learning_interest,created_at").order("created_at", { ascending: false }),
   ]);
 
   if (regsRes.error) return NextResponse.json({ error: regsRes.error.message }, { status: 500 });
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
   const filter = (rows: any[]) => {
     if (!q) return rows;
-    return rows.filter((r) => String(r.full_name || "").toLowerCase().includes(q) || String(r.email || "").toLowerCase().includes(q));
+    return rows.filter((r) => String(r.full_name || "").toLowerCase().includes(q) || String(r.email || "").toLowerCase().includes(q) || String(r.learning_interest || "").toLowerCase().includes(q));
   };
 
   const hackers = filter((regsRes.data ?? []) as any[]);

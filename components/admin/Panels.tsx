@@ -162,7 +162,7 @@ export function AttendeesPanel() {
   const [rows, setRows] = useState<any[]>([]);
   useEffect(() => { sb().from("event_attendees").select("*").order("created_at", { ascending: false }).then(({ data }) => setRows(data ?? [])); }, []);
   const csv = () => {
-    const head = ["full_name", "email", "phone", "team_name", "team_members", "created_at"];
+    const head = ["full_name", "email", "learning_interest", "phone", "team_name", "team_members", "created_at"];
     const esc = (v: any) => '"' + String(Array.isArray(v) ? v.join("; ") : v ?? "").replace(/"/g, '""') + '"';
     const out = [head.join(","), ...rows.map((r) => head.map((h) => esc(r[h])).join(","))].join("\n");
     const a = document.createElement("a");
@@ -177,12 +177,12 @@ export function AttendeesPanel() {
         <button className="btn-ghost !py-1 text-sm" onClick={csv}>Download CSV</button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[40rem]">
-          <thead><tr className="text-left text-muted"><th className="py-1">Name</th><th>Email</th><th>Phone</th><th>Team</th><th>Members</th></tr></thead>
+        <table className="w-full text-sm min-w-[48rem]">
+          <thead><tr className="text-left text-muted"><th className="py-1">Name</th><th>Email</th><th>Wants to learn</th><th>Phone</th><th>Team</th><th>Members</th></tr></thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-t border-white/10 align-top">
-                <td className="py-1">{r.full_name}</td><td>{r.email}</td><td>{r.phone}</td><td>{r.team_name}</td><td>{(r.team_members ?? []).join(", ")}</td>
+                <td className="py-1">{r.full_name}</td><td>{r.email}</td><td className="max-w-[14rem] truncate" title={r.learning_interest || ""}>{r.learning_interest || "—"}</td><td>{r.phone}</td><td>{r.team_name}</td><td>{(r.team_members ?? []).join(", ")}</td>
               </tr>
             ))}
           </tbody>
