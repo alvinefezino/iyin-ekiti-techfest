@@ -365,8 +365,8 @@ function SponsorPromoCard({ s }: { s: Item }) {
 
       {/* Second modal - menu + combo + checkout */}
       {showMenu && (
-        <div className="fixed inset-0 z-[80] flex items-start sm:items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto overscroll-contain pt-[max(12px,env(safe-area-inset-top))] pb-[max(12px,env(safe-area-inset-bottom))]" onClick={closeMenu}>
-          <div className="w-full max-w-[calc(100vw-16px)] sm:max-w-[560px] my-2 sm:my-6 rounded-2xl bg-[#0a2a12] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in max-h-[92dvh] sm:max-h-[90vh] flex flex-col" onClick={(e)=>e.stopPropagation()}>
+        <div className="fixed inset-0 z-[80] flex items-start sm:items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto overflow-x-hidden overscroll-contain pt-[max(12px,env(safe-area-inset-top))] pb-[max(12px,env(safe-area-inset-bottom))]" onClick={closeMenu}>
+          <div className="w-full max-w-[560px] my-2 sm:my-6 rounded-2xl bg-[#0a2a12] border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in max-h-[92dvh] sm:max-h-[90vh] flex flex-col min-w-0" onClick={(e)=>e.stopPropagation()}>
             <div className="h-1 bg-[#F57F17] shrink-0" />
             <div className="p-3 sm:p-5 overflow-y-auto flex-1 overscroll-contain overflow-x-hidden">
               {phase==="verifying" ? (
@@ -442,28 +442,25 @@ function SponsorPromoCard({ s }: { s: Item }) {
                               const qty = combo[it.id] ?? 0;
                               const selected = qty > 0;
                               return (
-                                <div key={it.id} className={"flex items-start gap-2 sm:gap-3 rounded-xl px-3 py-3 border transition-colors " + (selected ? "bg-[#F57F17]/15 border-[#F57F17]/40" : "bg-white/[0.04] border-white/10 hover:bg-white/[0.07]") }>
+                                <div key={it.id} className={"flex items-start gap-2.5 rounded-xl px-3 py-3 border transition-colors min-w-0 overflow-hidden " + (selected ? "bg-[#F57F17]/15 border-[#F57F17]/40" : "bg-white/[0.04] border-white/10 hover:bg-white/[0.07]") }>
                                   <button onClick={()=> toggleItem(it.id)} className={"mt-0.5 w-7 h-7 sm:w-8 sm:h-8 min-w-[28px] min-h-[28px] rounded-full border-2 grid place-items-center shrink-0 transition-colors cursor-pointer touch-manipulation " + (selected ? "bg-[#F57F17] border-[#F57F17] text-white" : "border-white/25 bg-transparent active:bg-white/10")} aria-label={selected ? "Remove " + it.name : "Add " + it.name}>
                                     {selected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 13l4 4L19 7"/></svg>}
                                   </button>
-                                  <div className="flex-1 min-w-0 pt-0.5">
-                                    <div className="text-[13px] sm:text-sm font-medium leading-snug break-words">{it.name}</div>
+                                  <div className="flex-1 min-w-0 pt-0.5 overflow-hidden">
+                                    <div className="text-[13px] sm:text-sm font-medium leading-snug break-words pr-1">{it.name}</div>
                                     <div className="text-[11px] sm:text-xs text-white/55 mt-0.5">{it.category}</div>
-                                    <div className="sm:hidden mt-1.5 flex items-center gap-2">
-                                      <span className="text-sm font-bold font-mono text-[#F57F17]">{formatNaira(it.price)}</span>
-                                      {selected && (
-                                        <span className="ml-auto flex items-center gap-1.5">
-                                          <button onClick={()=> dec(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-white/15 grid place-items-center text-sm hover:bg-white/20 active:bg-white/25 cursor-pointer touch-manipulation" aria-label="Decrease quantity">−</button>
-                                          <span className="w-7 text-center text-sm font-bold tabular-nums">{qty}</span>
-                                          <button onClick={()=> inc(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#F57F17] grid place-items-center text-sm text-white hover:bg-[#ff8c1a] active:bg-[#e56f00] cursor-pointer touch-manipulation" aria-label="Increase quantity">+</button>
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="hidden sm:flex flex-col items-end shrink-0 gap-1">
-                                    <div className="text-sm font-bold font-mono text-[#F57F17]">{formatNaira(it.price)}</div>
                                     {selected && (
-                                      <div className="flex items-center gap-1">
+                                      <div className="sm:hidden mt-2 flex items-center gap-1.5">
+                                        <button onClick={()=> dec(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-white/15 grid place-items-center text-sm hover:bg-white/20 active:bg-white/25 cursor-pointer touch-manipulation" aria-label="Decrease quantity">−</button>
+                                        <span className="w-7 text-center text-sm font-bold tabular-nums">{qty}</span>
+                                        <button onClick={()=> inc(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#F57F17] grid place-items-center text-sm text-white hover:bg-[#ff8c1a] active:bg-[#e56f00] cursor-pointer touch-manipulation" aria-label="Increase quantity">+</button>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col items-end shrink-0 gap-1.5 ml-1">
+                                    <div className="text-[13px] sm:text-sm font-bold font-mono text-[#F57F17] whitespace-nowrap leading-none pt-1">{formatNaira(it.price)}</div>
+                                    {selected && (
+                                      <div className="hidden sm:flex items-center gap-1">
                                         <button onClick={()=> dec(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-white/15 grid place-items-center text-sm hover:bg-white/20 active:bg-white/25 cursor-pointer touch-manipulation" aria-label="Decrease quantity">−</button>
                                         <span className="w-7 text-center text-sm font-bold tabular-nums">{qty}</span>
                                         <button onClick={()=> inc(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#F57F17] grid place-items-center text-sm text-white hover:bg-[#ff8c1a] active:bg-[#e56f00] cursor-pointer touch-manipulation" aria-label="Increase quantity">+</button>
@@ -688,10 +685,11 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
           </div>
         </div>
       );
-    case "sponsors":
+    case "sponsors": {
+      const sponsorHeading = p.heading === "Sponsors" ? "Sponsorship & Partners" : p.heading;
       return (
         <div className="section" id={b.id}>
-          <h2>{p.heading}</h2>
+          <h2>{sponsorHeading}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-14 md:gap-4 pt-7 md:pt-0">
             {items(b).map((s, i) => (
               <SponsorPromoCard key={i} s={s} />
@@ -699,6 +697,7 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
           </div>
         </div>
       );
+    }
     case "faq":
       return (
         <div className="section" id={b.id}>

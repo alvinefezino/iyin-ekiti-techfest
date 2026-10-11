@@ -115,9 +115,9 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     ],
   },
   sponsors: {
-    label: "Sponsors",
+    label: "Sponsorship & Partners",
     defaults: {
-      heading: "Sponsors",
+      heading: "Sponsorship & Partners",
       items: [
         { name: "Sponsor", image: "", badge: "Food sponsor", highlight: "", promoEnabled: "", promoCode: "IYINTECHFEST", bankName: "Lumibakes&Treats", accountNumber: "6586455889", accountName: "OPay" },
         { name: "Sponsor", image: "", badge: "Food sponsor", highlight: "1", promoEnabled: "1", promoCode: "IYINTECHFEST", bankName: "Lumibakes&Treats", accountNumber: "6586455889", accountName: "OPay" },
@@ -126,7 +126,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
     fields: [
       { key: "heading", label: "Heading", kind: "text" },
       {
-        key: "items", label: "Sponsors", kind: "items", fields: [
+        key: "items", label: "Sponsors / Partners", kind: "items", fields: [
           { key: "name", label: "Name", kind: "text" } as SubField,
           { key: "image", label: "Logo", kind: "image" } as SubField,
           { key: "badge", label: "Badge (e.g. Food sponsor - shows above card)", kind: "text", placeholder: "Food sponsor" } as SubField,
