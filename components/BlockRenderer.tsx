@@ -335,7 +335,7 @@ function SponsorPromoCard({ s }: { s: Item }) {
 
       {/* First modal - promo code only */}
       {active && showPromo && (
-        <div className="fixed inset-0 z-[80] flex items-start sm:items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto pt-[max(12px,env(safe-area-inset-top))]" onClick={()=> setShowPromo(false)}>
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={()=> setShowPromo(false)}>
           <div className="w-full max-w-[calc(100vw-24px)] sm:max-w-[360px] my-4 rounded-2xl bg-[#0a2a12] border border-[#F57F17]/40 shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden promo-in flex flex-col" onClick={(e)=>e.stopPropagation()}>
             <div className="h-1 bg-[#F57F17] shrink-0" />
             <div className="p-5 text-center">
@@ -442,18 +442,18 @@ function SponsorPromoCard({ s }: { s: Item }) {
                               const qty = combo[it.id] ?? 0;
                               const selected = qty > 0;
                               return (
-                                <div key={it.id} className={"flex items-start gap-2.5 rounded-xl px-3 py-3 border transition-colors min-w-0 overflow-hidden " + (selected ? "bg-[#F57F17]/15 border-[#F57F17]/40" : "bg-white/[0.04] border-white/10 hover:bg-white/[0.07]") }>
-                                  <button onClick={()=> toggleItem(it.id)} className={"mt-0.5 w-7 h-7 sm:w-8 sm:h-8 min-w-[28px] min-h-[28px] rounded-full border-2 grid place-items-center shrink-0 transition-colors cursor-pointer touch-manipulation " + (selected ? "bg-[#F57F17] border-[#F57F17] text-white" : "border-white/25 bg-transparent active:bg-white/10")} aria-label={selected ? "Remove " + it.name : "Add " + it.name}>
+                                <div key={it.id} role="button" tabIndex={0} onClick={()=> toggleItem(it.id)} onKeyDown={(e)=> { if(e.key==="Enter" || e.key===" ") { e.preventDefault(); toggleItem(it.id); } }} className={"flex items-start gap-2.5 rounded-xl px-3 py-3 border transition-colors min-w-0 overflow-hidden cursor-pointer touch-manipulation select-none active:scale-[0.99] " + (selected ? "bg-[#F57F17]/15 border-[#F57F17]/40" : "bg-white/[0.04] border-white/10 hover:bg-white/[0.07] active:bg-white/[0.05]") }>
+                                  <span aria-hidden className={"mt-0.5 w-7 h-7 sm:w-8 sm:h-8 min-w-[28px] min-h-[28px] rounded-full border-2 grid place-items-center shrink-0 transition-colors pointer-events-none " + (selected ? "bg-[#F57F17] border-[#F57F17] text-white" : "border-white/25 bg-transparent")}>
                                     {selected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 13l4 4L19 7"/></svg>}
-                                  </button>
+                                  </span>
                                   <div className="flex-1 min-w-0 pt-0.5 overflow-hidden">
                                     <div className="text-[13px] sm:text-sm font-medium leading-snug break-words pr-1">{it.name}</div>
                                     <div className="text-[11px] sm:text-xs text-white/55 mt-0.5">{it.category}</div>
                                     {selected && (
                                       <div className="sm:hidden mt-2 flex items-center gap-1.5">
-                                        <button onClick={()=> dec(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-white/15 grid place-items-center text-sm hover:bg-white/20 active:bg-white/25 cursor-pointer touch-manipulation" aria-label="Decrease quantity">−</button>
+                                        <button onClick={(e)=>{e.stopPropagation(); dec(it.id);}} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-white/15 grid place-items-center text-sm hover:bg-white/20 active:bg-white/25 cursor-pointer touch-manipulation" aria-label="Decrease quantity">−</button>
                                         <span className="w-7 text-center text-sm font-bold tabular-nums">{qty}</span>
-                                        <button onClick={()=> inc(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#F57F17] grid place-items-center text-sm text-white hover:bg-[#ff8c1a] active:bg-[#e56f00] cursor-pointer touch-manipulation" aria-label="Increase quantity">+</button>
+                                        <button onClick={(e)=>{e.stopPropagation(); inc(it.id);}} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#F57F17] grid place-items-center text-sm text-white hover:bg-[#ff8c1a] active:bg-[#e56f00] cursor-pointer touch-manipulation" aria-label="Increase quantity">+</button>
                                       </div>
                                     )}
                                   </div>
@@ -461,9 +461,9 @@ function SponsorPromoCard({ s }: { s: Item }) {
                                     <div className="text-[13px] sm:text-sm font-bold font-mono text-[#F57F17] whitespace-nowrap leading-none pt-1">{formatNaira(it.price)}</div>
                                     {selected && (
                                       <div className="hidden sm:flex items-center gap-1">
-                                        <button onClick={()=> dec(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-white/15 grid place-items-center text-sm hover:bg-white/20 active:bg-white/25 cursor-pointer touch-manipulation" aria-label="Decrease quantity">−</button>
+                                        <button onClick={(e)=>{e.stopPropagation(); dec(it.id);}} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-white/15 grid place-items-center text-sm hover:bg-white/20 active:bg-white/25 cursor-pointer touch-manipulation" aria-label="Decrease quantity">−</button>
                                         <span className="w-7 text-center text-sm font-bold tabular-nums">{qty}</span>
-                                        <button onClick={()=> inc(it.id)} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#F57F17] grid place-items-center text-sm text-white hover:bg-[#ff8c1a] active:bg-[#e56f00] cursor-pointer touch-manipulation" aria-label="Increase quantity">+</button>
+                                        <button onClick={(e)=>{e.stopPropagation(); inc(it.id);}} className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#F57F17] grid place-items-center text-sm text-white hover:bg-[#ff8c1a] active:bg-[#e56f00] cursor-pointer touch-manipulation" aria-label="Increase quantity">+</button>
                                       </div>
                                     )}
                                   </div>
