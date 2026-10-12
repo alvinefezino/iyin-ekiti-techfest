@@ -41,7 +41,7 @@ export default function HeroBlock({
           style={{ opacity: textOpacity }}
           className="absolute bottom-8 inset-x-0 z-10 flex justify-center"
         >
-          <a href={props.ctaHref || "#register"} className="btn-primary">
+          <a href={props.ctaHref || "https://hack.skilledcrow.com/register"} className="btn-primary" target={String(props.ctaHref || "").startsWith("http") ? "_blank" : undefined} rel={String(props.ctaHref || "").startsWith("http") ? "noopener noreferrer" : undefined}>
             {props.ctaLabel}
           </a>
         </motion.div>

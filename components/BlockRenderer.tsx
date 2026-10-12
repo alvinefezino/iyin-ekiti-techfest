@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { resolveSlugs, type Block } from "@/lib/blocks";
 import HeroBlock from "@/components/blocks/HeroBlock";
 import { useEventDate } from "@/hooks/useCountdown";
-import { NewsletterForm, RegisterForm, AttendeesForm, TicketForm } from "@/components/Forms";
+import { NewsletterForm, AttendeesForm, TicketForm } from "@/components/Forms";
 import { MENU_CATEGORIES, formatNaira, type MenuItem } from "@/lib/menu";
 
 type Item = Record<string, string>;
@@ -717,7 +717,30 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
         <div className="section" id={b.id}>
           <h2>{p.heading}</h2>
           <p className="text-muted mb-5 max-w-xl">{p.body}</p>
-          <RegisterForm />
+          <div className="glass p-6 max-w-xl">
+            <p className="text-sm text-muted leading-relaxed">
+              Hackathon registration is now handled on our official hackathon portal. Click below to register your team and find full details, rules, and timelines.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <a
+                href="https://hack.skilledcrow.com/register"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary inline-flex items-center gap-2"
+              >
+                Register for the hackathon
+                <span aria-hidden>→</span>
+              </a>
+              <a
+                href="https://hack.skilledcrow.com/register"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-teal underline underline-offset-4 hover:text-teal/80 self-center"
+              >
+                Read more...
+              </a>
+            </div>
+          </div>
         </div>
       );
     case "attendees":
@@ -761,16 +784,19 @@ function Render({ b, onHeroVisible }: { b: Block; onHeroVisible?: (v: boolean) =
           {p.caption && <figcaption className="text-muted text-sm mt-2">{p.caption}</figcaption>}
         </figure>
       );
-    case "cta":
+    case "cta": {
+      const href = p.href === "#register" ? "https://hack.skilledcrow.com/register" : p.href;
+      const ext = typeof href === "string" && href.startsWith("http");
       return (
         <div className="section" id={b.id}>
           <div className="glass-strong p-8 text-center">
             <h2>{p.heading}</h2>
             <p className="text-muted mb-5">{p.body}</p>
-            <a className="btn-primary" href={p.href}>{p.label}</a>
+            <a className="btn-primary" href={href} target={ext ? "_blank" : undefined} rel={ext ? "noopener noreferrer" : undefined}>{p.label}</a>
           </div>
         </div>
       );
+    }
     case "footer":
       return (
         <footer className="px-5 py-10 pb-28 border-t border-white/10 text-center text-sm text-muted" id={b.id}>

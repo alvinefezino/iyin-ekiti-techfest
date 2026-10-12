@@ -18,7 +18,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
       title: "Iyin Ekiti TechFest",
       subtitle: "A hackathon powered by FIESU and FUTES Gotham Mafians. 7 November 2026, 9:00 AM to 5:00 PM.",
       ctaLabel: "Register for the hackathon",
-      ctaHref: "#register",
+      ctaHref: "https://hack.skilledcrow.com/register",
     },
     fields: [
       { key: "eyebrow", label: "Small line above title", kind: "text" },
@@ -191,7 +191,7 @@ export const BLOCK_DEFS: Record<BlockType, { label: string; nav?: boolean; defau
   },
   cta: {
     label: "Call to action",
-    defaults: { heading: "Ready to build?", body: "Lorem ipsum dolor sit amet.", label: "Register now", href: "#register" },
+    defaults: { heading: "Ready to build?", body: "Lorem ipsum dolor sit amet.", label: "Register now", href: "https://hack.skilledcrow.com/register" },
     fields: [{ key: "heading", label: "Heading", kind: "text" }, { key: "body", label: "Body", kind: "textarea" }, { key: "label", label: "Button label", kind: "text" }, { key: "href", label: "Button link", kind: "text" }],
   },
   footer: {
